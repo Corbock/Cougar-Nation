@@ -1,0 +1,1105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cougar Nation | Level 0</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font-family: monospace; color: #e8dc8a; }
+    canvas#view { display: block; width: 100vw; height: 100vh; }
+    #minimap { width: 220px; height: 220px; border: 2px solid #e8dc8a; background: #000; image-rendering: pixelated; }
+    #phone {
+      position: fixed; right: 50%; bottom: 50%; width: 300px; height: 560px; z-index: 6;
+      transform: translate(150px, 280px); transform-origin: bottom right; transition: transform .25s;
+      background: #111; border: 6px solid #222; border-radius: 34px; box-shadow: 0 0 30px #000; overflow: hidden;
+      color: #eee; font-family: system-ui, sans-serif; display: none; box-sizing: content-box;
+    }
+    #phone.open { display: block; }
+    #phone.mini { right: 16px; bottom: 16px; transform: scale(.6); }
+    #phone .screen { position: absolute; inset: 0; display: none; flex-direction: column; padding: 18px; box-sizing: border-box; }
+    #phone .screen.on { display: flex; }
+    #lock { background: linear-gradient(160deg, #1d2b4a, #0b0f1c); align-items: center; cursor: pointer; }
+    #lock .time { font-size: 64px; margin-top: 70px; font-weight: 300; }
+    #lock .date { font-size: 16px; opacity: .8; }
+    #lock .hint { margin-top: 14px; font-size: 13px; opacity: .6; }
+    #torch { margin-top: auto; width: 54px; height: 54px; border-radius: 50%; border: 0; background: #333; color: #fff; font-size: 24px; cursor: pointer; }
+    #torch.on { background: #f5d742; color: #000; }
+    #home { background: linear-gradient(160deg, #2a3a2a, #10170f); }
+    #home .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 40px; }
+    .app { background: none; border: 0; color: #eee; font-size: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .app b { width: 54px; height: 54px; border-radius: 14px; background: #3d5a80; display: flex; align-items: center; justify-content: center; font-size: 26px; }
+    .app:disabled { opacity: .4; cursor: not-allowed; }
+    .appscreen { background: #181818; }
+    .appscreen header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; font-size: 18px; }
+    .back { background: #333; color: #fff; border: 0; border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+    #calcOut { background: #000; font-size: 36px; text-align: right; padding: 14px 10px; border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
+    #calcKeys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; flex: 1; }
+    #calcKeys button { font-size: 22px; border: 0; border-radius: 10px; background: #333; color: #fff; cursor: pointer; }
+    #calcKeys button.op { background: #e08a1e; }
+    #mapHost { display: flex; justify-content: center; }
+    #recipeList { min-height: 0; overflow-y: auto; }
+    .recipe { padding: 10px 0; border-bottom: 1px solid #444; }
+    .recipe:last-child { border-bottom: 0; }
+    .recipe-output { font-weight: 600; margin-bottom: 4px; }
+    .recipe-needs { color: #bbb; font-size: 13px; line-height: 1.5; }
+    #opts label { display: block; margin: 10px 0; font-size: 15px; }
+    #hud { position: fixed; left: 16px; bottom: 16px; font-size: 13px; text-shadow: 0 0 4px #000; line-height: 1.5; }
+    #stamina { width: 140px; height: 6px; border: 1px solid #e8dc8a; margin-top: 4px; }
+    #stamina i { display: block; height: 100%; background: #e8dc8a; width: 100%; }
+    #overlay {
+      position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: rgba(0,0,0,.78); text-align: center; cursor: pointer; z-index: 5;
+    }
+    #overlay h1 { font-size: 42px; margin: 0 0 8px; letter-spacing: 4px; }
+    #overlay p { margin: 4px; color: #bdb272; }
+    #hotbar { position: fixed; left: 50%; bottom: 12px; transform: translateX(-50%); display: flex; gap: 3px; z-index: 3; }
+    #invPanel { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 7; display: none; background: #c6c6c6; border: 3px solid #333; padding: 12px; color: #222; }
+    #invPanel.open { display: block; }
+    .invRow { display: flex; gap: 20px; align-items: flex-start; }
+    .slots.craft { grid-template-columns: repeat(3, 38px); margin-bottom: 8px; }
+    .craft .slot { width: 38px; height: 38px; font-size: 20px; }
+    .craftOutRow { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+    #craftOut { cursor: pointer; }
+    .slot img.icon { width: 80%; height: 80%; object-fit: contain; image-rendering: pixelated; pointer-events: none; }
+    #invPanel h3 { margin: 0 0 6px; font-size: 14px; }
+    .slots { display: grid; grid-template-columns: repeat(9, 48px); gap: 3px; margin-bottom: 12px; }
+    .slot { position: relative; width: 48px; height: 48px; box-sizing: border-box; background: #8b8b8b; border: 2px solid #555; display: flex; align-items: center; justify-content: center; font-size: 26px; user-select: none; }
+    #hotbar .slot { background: rgba(0,0,0,.55); border-color: #777; }
+    .slot.sel { border-color: #fff; box-shadow: 0 0 6px #fff; }
+    #invPanel .slot:hover { background: #a8a8a8; }
+    .slot .ct { position: absolute; right: 3px; bottom: 0; font-size: 13px; font-weight: bold; color: #fff; text-shadow: 1px 1px 0 #000; }
+    #cursorItem { position: fixed; z-index: 9; pointer-events: none; font-size: 26px; display: none; transform: translate(-50%, -50%); }
+    #cursorItem .ct { font-size: 13px; font-weight: bold; color: #fff; text-shadow: 1px 1px 0 #000; }
+    #hint { position: fixed; left: 50%; top: calc(50% + 24px); transform: translateX(-50%); font-size: 13px; text-shadow: 0 0 4px #000; display: none; }
+    #cross { position: fixed; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px; background: rgba(232,220,138,.6); border-radius: 50%; }
+    #alert { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity .3s; box-shadow: inset 0 0 160px 30px rgba(160,0,0,.75); }
+    #caught { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: #000; color: #b00; font-size: 40px; letter-spacing: 6px; z-index: 4; }
+  </style>
+  <script type="importmap">
+    { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+  </script>
+</head>
+<body>
+  <canvas id="view"></canvas>
+  <div id="cross"></div>
+  <div id="hint"></div>
+  <div id="hotbar"></div>
+  <div id="invPanel">
+    <div class="invRow">
+      <div>
+        <h3>Inventory</h3>
+        <div class="slots" id="invMain"></div>
+        <div class="slots" id="invHot" style="margin-bottom:0"></div>
+      </div>
+      <div>
+        <h3>Crafting</h3>
+        <div class="slots craft" id="craftGrid"></div>
+        <div class="craftOutRow">Result &rarr; <div class="slot" id="craftOut"></div></div>
+      </div>
+    </div>
+  </div>
+  <div id="cursorItem"></div>
+  <div id="alert"></div>
+  <div id="caught">IT FOUND YOU</div>
+  <div id="phone">
+    <div class="screen on" id="lock">
+      <div class="time" id="clockTime"></div>
+      <div class="date" id="clockDate"></div>
+      <div class="hint">Click to unlock</div>
+      <button id="torch" title="Flashlight">&#128294;</button>
+    </div>
+    <div class="screen" id="home">
+      <div class="grid">
+        <button class="app" data-app="calc"><b>&#128425;</b>Calculator</button>
+        <button class="app" data-app="map"><b>&#128506;</b>Map</button>
+        <button class="app" disabled title="Disabled in single player"><b>&#128172;</b>Chat</button>
+        <button class="app" data-app="recipes"><b>&#128218;</b>Recipes</button>
+        <button class="app" data-app="opts"><b>&#9881;</b>Options</button>
+      </div>
+    </div>
+    <div class="screen appscreen" id="app-calc">
+      <header><button class="back">&lsaquo;</button>Calculator</header>
+      <div id="calcOut">0</div>
+      <div id="calcKeys"></div>
+    </div>
+    <div class="screen appscreen" id="app-map">
+      <header><button class="back">&lsaquo;</button>Map</header>
+      <div id="mapHost"><canvas id="minimap" width="200" height="200"></canvas></div>
+    </div>
+    <div class="screen appscreen" id="app-recipes">
+      <header><button class="back">&lsaquo;</button>Recipes</header>
+      <div id="recipeList"></div>
+    </div>
+    <div class="screen appscreen" id="app-opts">
+      <header><button class="back">&lsaquo;</button>Options</header>
+      <div id="opts"><label><input type="checkbox" id="optPos" checked> Show coordinates</label></div>
+    </div>
+  </div>
+  <div id="hud">
+    <div id="pos"></div>
+    <div id="flash"></div>
+    <div id="stamina"><i></i></div>
+  </div>
+  <div id="overlay">
+    <h1>LEVEL 0</h1>
+    <p>Click to enter. Don't stay too long.</p>
+    <p>F phone &middot; E inventory &middot; Click to pick up &middot; 1-9 hotbar &middot; WASD / arrows move &middot; Mouse look &middot; Shift sprint &middot; Space jump &middot; C crouch &middot; Esc pause</p>
+  </div>
+
+<script type="module">
+import * as THREE from 'three';
+
+/* ---------- Seeded RNG ---------- */
+let seed = 1337;
+const rand = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
+
+/* ---------- Map generation ---------- */
+const N = 41;            // grid size (odd)
+const CELL = 3.2;        // metres per grid cell
+const WALL_H = 3;
+const grid = Array.from({ length: N }, () => new Uint8Array(N).fill(1)); // 1 = wall
+
+// Recursive-backtracker maze on odd cells
+(function carve() {
+  const stack = [[1, 1]];
+  grid[1][1] = 0;
+  const dirs = [[2, 0], [-2, 0], [0, 2], [0, -2]];
+  while (stack.length) {
+    const [x, y] = stack[stack.length - 1];
+    const opts = dirs.filter(([dx, dy]) => {
+      const nx = x + dx, ny = y + dy;
+      return nx > 0 && ny > 0 && nx < N - 1 && ny < N - 1 && grid[ny][nx] === 1;
+    });
+    if (!opts.length) { stack.pop(); continue; }
+    const [dx, dy] = opts[Math.floor(rand() * opts.length)];
+    grid[y + dy / 2][x + dx / 2] = 0;
+    grid[y + dy][x + dx] = 0;
+    stack.push([x + dx, y + dy]);
+  }
+})();
+
+// Knock out random walls so there are loops, then open large rooms with pillars
+for (let i = 0; i < 140; i++) {
+  const x = 1 + Math.floor(rand() * (N - 2)), y = 1 + Math.floor(rand() * (N - 2));
+  if (grid[y][x] === 1 && ((x % 2) !== (y % 2))) grid[y][x] = 0;
+}
+for (let r = 0; r < 9; r++) {
+  const w = 4 + Math.floor(rand() * 6), h = 4 + Math.floor(rand() * 6);
+  const x0 = 2 + Math.floor(rand() * (N - w - 4)), y0 = 2 + Math.floor(rand() * (N - h - 4));
+  for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) grid[y][x] = 0;
+  for (let y = y0 + 1; y < y0 + h - 1; y += 3)
+    for (let x = x0 + 1; x < x0 + w - 1; x += 3) grid[y][x] = 1; // pillars
+}
+for (let i = 0; i < N; i++) { grid[0][i] = grid[N - 1][i] = grid[i][0] = grid[i][N - 1] = 1; }
+
+const isWall = (gx, gy) => gx < 0 || gy < 0 || gx >= N || gy >= N || grid[gy][gx] === 1;
+const toGrid = (v) => Math.floor(v / CELL);
+
+/* ---------- Textures (all image files live in assets/textures/) ---------- */
+const TEXTURE_DIR = 'assets/textures/';
+const TEXTURES = {
+  wall: 'wall.png',
+  floor: 'floor.png',
+  ceiling: 'ceiling.png',
+  faces: ['face_1.png', 'face_2.png', 'face_3.png'], // one per monster type
+};
+const loader = new THREE.TextureLoader();
+function loadTex(file, repX = 1, repY = 1) {
+  const t = loader.load(TEXTURE_DIR + file);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(repX, repY);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 8;
+  return t;
+}
+function makeCanvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+
+/* ---------- Scene ---------- */
+const canvas = document.getElementById('view');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x8a7d3c);
+scene.fog = new THREE.Fog(0x8a7d3c, 4, 38);
+const camera = new THREE.PerspectiveCamera(75, 1, 0.05, 80);
+scene.add(camera);
+
+const ambient = new THREE.AmbientLight(0xfff2b0, 0.9);
+const hemi = new THREE.HemisphereLight(0xfff6c0, 0x6b5d2c, 0.5);
+scene.add(ambient, hemi);
+const lamp = new THREE.PointLight(0xfff0a0, 14, 18, 1.6);
+camera.add(lamp);
+
+// Flashlight (F): a spotlight on the camera, off until the player switches it on
+const flashlight = new THREE.SpotLight(0xfff4d0, 70, 34, 0.42, 0.55, 1.2);
+flashlight.position.set(0.12, -0.1, 0);
+flashlight.target.position.set(0, 0, -5);
+flashlight.visible = false;
+camera.add(flashlight, flashlight.target);
+
+const WORLD = N * CELL;
+
+// Floor and ceiling
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(WORLD, WORLD),
+  new THREE.MeshPhongMaterial({ specular: 0x000000, map: loadTex(TEXTURES.floor, WORLD / 2.5, WORLD / 2.5) }));
+floor.rotation.x = -Math.PI / 2; floor.position.set(WORLD / 2, 0, WORLD / 2);
+scene.add(floor);
+const ceil = new THREE.Mesh(new THREE.PlaneGeometry(WORLD, WORLD),
+  new THREE.MeshPhongMaterial({ specular: 0x000000, map: loadTex(TEXTURES.ceiling, WORLD / 1.6, WORLD / 1.6) }));
+ceil.rotation.x = Math.PI / 2; ceil.position.set(WORLD / 2, WALL_H, WORLD / 2);
+scene.add(ceil);
+
+// Walls (instanced)
+let wallCount = 0;
+for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (grid[y][x]) wallCount++;
+const wallTex = loadTex(TEXTURES.wall);
+const walls = new THREE.InstancedMesh(new THREE.BoxGeometry(CELL, WALL_H, CELL),
+  new THREE.MeshPhongMaterial({ specular: 0x000000, map: wallTex }), wallCount);
+const m4 = new THREE.Matrix4();
+let wi = 0;
+for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (grid[y][x]) {
+  m4.setPosition((x + 0.5) * CELL, WALL_H / 2, (y + 0.5) * CELL);
+  walls.setMatrixAt(wi++, m4);
+}
+scene.add(walls);
+
+// Baseboard along the bottom of walls
+const base = new THREE.InstancedMesh(new THREE.BoxGeometry(CELL + 0.04, 0.18, CELL + 0.04),
+  new THREE.MeshPhongMaterial({ color: 0x4a4120, specular: 0x000000 }), wallCount);
+wi = 0;
+for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (grid[y][x]) {
+  m4.setPosition((x + 0.5) * CELL, 0.09, (y + 0.5) * CELL);
+  base.setMatrixAt(wi++, m4);
+}
+scene.add(base);
+
+/* ---------- Dark zones: unlit areas that need the flashlight ---------- */
+const DARK_ZONES = []; // grid rectangles { x0, y0, x1, y1 }
+for (let tries = 0; tries < 200 && DARK_ZONES.length < 5; tries++) {
+  const w = 9 + Math.floor(rand() * 6), h = 9 + Math.floor(rand() * 6);
+  const x0 = 1 + Math.floor(rand() * (N - w - 2)), y0 = 1 + Math.floor(rand() * (N - h - 2));
+  const z = { x0, y0, x1: x0 + w, y1: y0 + h };
+  const nearStart = x0 < 11 && y0 < 11;
+  const overlaps = DARK_ZONES.some((o) => z.x0 < o.x1 + 2 && z.x1 > o.x0 - 2 && z.y0 < o.y1 + 2 && z.y1 > o.y0 - 2);
+  if (!nearStart && !overlaps) DARK_ZONES.push(z);
+}
+const inDarkZone = (gx, gy) => DARK_ZONES.some((z) => gx >= z.x0 && gx < z.x1 && gy >= z.y0 && gy < z.y1);
+// 0 in lit areas, ramping to 1 over the first two cells inside a dark zone
+function darknessAt(wx, wz) {
+  let best = 0;
+  for (const z of DARK_ZONES) {
+    const d = Math.min(wx / CELL - z.x0, z.x1 - wx / CELL, wz / CELL - z.y0, z.y1 - wz / CELL);
+    if (d > 0) best = Math.max(best, Math.min(1, d / 2));
+  }
+  return best;
+}
+
+// Fluorescent panels on a regular lattice, a few flicker or are dead
+const lightGeo = new THREE.BoxGeometry(1.4, 0.06, 0.5);
+const lightMat = new THREE.MeshBasicMaterial({ color: 0xfffbd0 });
+const deadMat = new THREE.MeshBasicMaterial({ color: 0x6f6a4c });
+const flickerMat = new THREE.MeshBasicMaterial({ color: 0xfffbd0 });
+const panels = [], flickers = [], dead = [];
+for (let y = 1; y < N - 1; y += 2) for (let x = 1; x < N - 1; x += 2) {
+  if (grid[y][x] || inDarkZone(x, y)) continue;
+  const roll = rand();
+  (roll < 0.07 ? dead : roll < 0.14 ? flickers : panels).push([x, y]);
+}
+function addPanels(list, mat) {
+  if (!list.length) return;
+  const im = new THREE.InstancedMesh(lightGeo, mat, list.length);
+  list.forEach(([x, y], i) => { m4.setPosition((x + 0.5) * CELL, WALL_H - 0.04, (y + 0.5) * CELL); im.setMatrixAt(i, m4); });
+  scene.add(im);
+}
+addPanels(panels, lightMat); addPanels(dead, deadMat); addPanels(flickers, flickerMat);
+
+/* ---------- Player & physics ---------- */
+const player = {
+  pos: new THREE.Vector3(1.5 * CELL, 0, 1.5 * CELL),
+  vel: new THREE.Vector3(),
+  yaw: 0, pitch: 0,
+  onGround: true, radius: 0.35, eye: 1.65, crouch: 0, stamina: 1, bob: 0,
+};
+const PHYS = { walk: 3.2, sprint: 5.6, crouch: 1.6, accel: 40, airAccel: 8, friction: 9, gravity: 22, jump: 7.2 };
+
+const keys = {};
+addEventListener('keydown', (e) => {
+  if (e.code === 'KeyE') { if (!e.repeat && (invOpen || document.pointerLockElement === canvas)) toggleInventory(); return; }
+  if (e.code === 'KeyF') { if (!e.repeat && !invOpen && (document.pointerLockElement === canvas || phoneState !== 'closed')) cyclePhone(); return; }
+  if (phoneState === 'full' || invOpen) return;
+  if (/^Digit[1-9]$/.test(e.code)) selectSlot(+e.code.slice(5) - 1);
+  keys[e.code] = true;
+  if (e.code === 'Space') e.preventDefault();
+});
+addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+const overlay = document.getElementById('overlay');
+overlay.addEventListener('click', () => canvas.requestPointerLock());
+document.addEventListener('pointerlockchange', () => {
+  overlay.style.display = document.pointerLockElement === canvas || phoneState !== 'closed' || invOpen ? 'none' : 'flex';
+});
+
+/* ---------- Phone ---------- */
+const phone = document.getElementById('phone');
+let phoneState = 'closed'; // closed -> full -> mini -> closed
+function showScreen(id) {
+  phone.querySelectorAll('.screen').forEach((s) => s.classList.toggle('on', s.id === id));
+}
+function cyclePhone() {
+  if (phoneState === 'closed') {
+    phoneState = 'full';
+    for (const k in keys) keys[k] = false;
+    phone.classList.add('open'); phone.classList.remove('mini');
+    document.exitPointerLock();
+  } else if (phoneState === 'full') {
+    phoneState = 'mini';
+    phone.classList.add('mini');
+    canvas.requestPointerLock();
+  } else {
+    phoneState = 'closed';
+    phone.classList.remove('open', 'mini');
+    showScreen('lock');
+  }
+}
+// Clicking outside the phone returns to the game (Esc leaves the mouse unlocked)
+document.addEventListener('click', (e) => {
+  if (phoneState === 'closed' || invOpen || phone.contains(e.target) || document.pointerLockElement === canvas) return;
+  if (phoneState === 'full') { phoneState = 'mini'; phone.classList.add('mini'); }
+  canvas.requestPointerLock();
+});
+const torchBtn = document.getElementById('torch');
+torchBtn.addEventListener('click', (e) => { e.stopPropagation(); flashlight.visible = !flashlight.visible; });
+document.getElementById('lock').addEventListener('click', () => showScreen('home'));
+phone.querySelectorAll('.app[data-app]').forEach((b) => b.addEventListener('click', () => showScreen('app-' + b.dataset.app)));
+phone.querySelectorAll('.back').forEach((b) => b.addEventListener('click', () => showScreen('home')));
+const clockTime = document.getElementById('clockTime'), clockDate = document.getElementById('clockDate');
+function tickClock() {
+  const d = new Date();
+  clockTime.textContent = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  clockDate.textContent = d.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+}
+tickClock(); setInterval(tickClock, 1000);
+document.getElementById('optPos').addEventListener('change', (e) => { document.getElementById('pos').style.display = e.target.checked ? '' : 'none'; });
+
+// Calculator
+const calc = { cur: '0', acc: null, op: null, fresh: true };
+const calcOut = document.getElementById('calcOut');
+const apply = (a, op, b) => op === '+' ? a + b : op === '-' ? a - b : op === '*' ? a * b : op === '/' ? (b === 0 ? NaN : a / b) : b;
+function calcPress(k) {
+  if (/\d|\./.test(k)) {
+    if (calc.fresh) { calc.cur = k === '.' ? '0.' : k; calc.fresh = false; }
+    else if (k !== '.' || !calc.cur.includes('.')) calc.cur += k;
+  } else if (k === 'C') { calc.cur = '0'; calc.acc = null; calc.op = null; calc.fresh = true; }
+  else {
+    const v = parseFloat(calc.cur);
+    if (calc.op && !calc.fresh) calc.cur = String(+apply(calc.acc, calc.op, v).toPrecision(12));
+    calc.acc = parseFloat(calc.cur);
+    calc.op = k === '=' ? null : k;
+    calc.fresh = true;
+  }
+  calcOut.textContent = calc.cur === 'NaN' ? 'Error' : calc.cur;
+}
+for (const k of ['C', '/', '*', '-', '7', '8', '9', '+', '4', '5', '6', '=', '1', '2', '3', '0', '.']) {
+  const b = document.createElement('button');
+  b.textContent = k === '*' ? '\u00d7' : k === '/' ? '\u00f7' : k;
+  if (/[C/*\-+=]/.test(k)) b.className = 'op';
+  if (k === '=') b.style.gridRow = 'span 2';
+  if (k === '0') b.style.gridColumn = 'span 2';
+  b.addEventListener('click', () => calcPress(k));
+  document.getElementById('calcKeys').appendChild(b);
+}
+addEventListener('mousemove', (e) => {
+  if (document.pointerLockElement !== canvas) return;
+  player.yaw -= e.movementX * 0.0022;
+  player.pitch = Math.max(-1.5, Math.min(1.5, player.pitch - e.movementY * 0.0022));
+});
+
+// Circle-vs-grid collision, resolved per axis so the player slides along walls
+function collide(p, r = player.radius, vel = player.vel) {
+  for (let pass = 0; pass < 2; pass++) {
+    const gx0 = toGrid(p.x - r - 0.01), gx1 = toGrid(p.x + r + 0.01);
+    const gz0 = toGrid(p.z - r - 0.01), gz1 = toGrid(p.z + r + 0.01);
+    for (let gz = gz0; gz <= gz1; gz++) for (let gx = gx0; gx <= gx1; gx++) {
+      if (!isWall(gx, gz)) continue;
+      const minX = gx * CELL, maxX = minX + CELL, minZ = gz * CELL, maxZ = minZ + CELL;
+      const cx = Math.max(minX, Math.min(p.x, maxX)), cz = Math.max(minZ, Math.min(p.z, maxZ));
+      let dx = p.x - cx, dz = p.z - cz;
+      const d2 = dx * dx + dz * dz;
+      if (d2 >= r * r) continue;
+      if (d2 > 1e-9) {
+        const d = Math.sqrt(d2), push = r - d;
+        dx /= d; dz /= d;
+        p.x += dx * push; p.z += dz * push;
+        const vn = vel.x * dx + vel.z * dz;
+        if (vn < 0) { vel.x -= vn * dx; vel.z -= vn * dz; }
+      } else { // centre inside a wall: eject along the shallowest axis
+        const l = p.x - minX, rr = maxX - p.x, t = p.z - minZ, b = maxZ - p.z;
+        const m = Math.min(l, rr, t, b);
+        if (m === l) p.x = minX - r; else if (m === rr) p.x = maxX + r;
+        else if (m === t) p.z = minZ - r; else p.z = maxZ + r;
+      }
+    }
+  }
+}
+
+let caught = false;
+function update(dt) {
+  const locked = document.pointerLockElement === canvas && !caught;
+  const f = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0);
+  const s = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0);
+  const wantCrouch = locked && keys.KeyC;
+  const wantSprint = locked && (keys.ShiftLeft || keys.ShiftRight) && f > 0 && !wantCrouch && player.stamina > 0.02;
+
+  let speed = wantCrouch ? PHYS.crouch : wantSprint ? PHYS.sprint : PHYS.walk;
+  player.stamina = Math.max(0, Math.min(1, player.stamina + (wantSprint ? -0.22 : 0.15) * dt));
+  player.crouch += ((wantCrouch ? 1 : 0) - player.crouch) * Math.min(1, dt * 10);
+
+  // Wish direction in world space
+  const sin = Math.sin(player.yaw), cos = Math.cos(player.yaw);
+  let wx = (-sin * f + cos * s), wz = (-cos * f - sin * s);
+  const len = Math.hypot(wx, wz);
+  if (len > 0 && locked) { wx /= len; wz /= len; } else { wx = wz = 0; }
+
+  const accel = player.onGround ? PHYS.accel : PHYS.airAccel;
+  if (player.onGround) { // ground friction
+    const sp = Math.hypot(player.vel.x, player.vel.z);
+    if (sp > 0) {
+      const drop = Math.max(sp, 1) * PHYS.friction * dt;
+      const k = Math.max(0, sp - drop) / sp;
+      player.vel.x *= k; player.vel.z *= k;
+    }
+  }
+  // Accelerate toward target speed along wish direction
+  const cur = player.vel.x * wx + player.vel.z * wz;
+  const add = Math.min(Math.max(0, speed - cur), accel * dt);
+  player.vel.x += wx * add; player.vel.z += wz * add;
+
+  if (locked && keys.Space && player.onGround && !wantCrouch) { player.vel.y = PHYS.jump; player.onGround = false; }
+  player.vel.y -= PHYS.gravity * dt;
+
+  player.pos.x += player.vel.x * dt;
+  player.pos.z += player.vel.z * dt;
+  player.pos.y += player.vel.y * dt;
+  collide(player.pos);
+
+  if (player.pos.y <= 0) { player.pos.y = 0; player.vel.y = 0; player.onGround = true; }
+  const eyeH = player.eye - player.crouch * 0.6;
+  if (player.pos.y + eyeH > WALL_H - 0.1) { player.pos.y = WALL_H - 0.1 - eyeH; if (player.vel.y > 0) player.vel.y = 0; }
+
+  const hs = Math.hypot(player.vel.x, player.vel.z);
+  if (player.onGround) player.bob += hs * dt * 2.2;
+  const bobY = player.onGround ? Math.sin(player.bob * 2) * 0.035 * Math.min(1, hs / PHYS.walk) : 0;
+
+  camera.position.set(player.pos.x, player.pos.y + eyeH + bobY, player.pos.z);
+  camera.rotation.set(player.pitch, player.yaw, 0, 'YXZ');
+}
+
+/* ---------- Entities ---------- */
+// Each type uses its own face texture (TEXTURES.faces[i]). Tweak stats/proportions here.
+const MONSTER_TYPES = [
+  { name: 'Lanky',   height: 2.85, shoulder: 0.42, depth: 0.2,  limb: 0.1,  arm: 1.9, head: 0.34, wander: 1.1, chase: 3.4, sight: 18, fov: 2.4 },
+  { name: 'Slender', height: 2.92, shoulder: 0.3,  depth: 0.16, limb: 0.07, arm: 1.7, head: 0.3,  wander: 1.6, chase: 4.5, sight: 13, fov: 1.8 },
+  { name: 'Looming', height: 2.6,  shoulder: 0.62, depth: 0.26, limb: 0.13, arm: 1.5, head: 0.4,  wander: 0.8, chase: 2.8, sight: 24, fov: 3.1 },
+];
+const blackMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+const monsters = [];
+const alertEl = document.getElementById('alert'), caughtEl = document.getElementById('caught');
+
+function box(w, h, d, x, y, z, parent) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), blackMat);
+  m.position.set(x, y, z); parent.add(m); return m;
+}
+function buildMonster(cfg, faceFile) {
+  const g = new THREE.Group();
+  const headH = cfg.head * 1.3, torsoH = cfg.height * 0.3;
+  const legLen = cfg.height - torsoH - headH - 0.05;
+  const shoulderY = legLen + torsoH - 0.1;
+  const limbs = { legs: [], arms: [] };
+  for (const side of [-1, 1]) {
+    const leg = new THREE.Group(); leg.position.set(side * cfg.shoulder * 0.3, legLen, 0);
+    box(cfg.limb, legLen, cfg.limb, 0, -legLen / 2, 0, leg); g.add(leg); limbs.legs.push(leg);
+    const arm = new THREE.Group(); arm.position.set(side * (cfg.shoulder / 2 + cfg.limb / 2), shoulderY, 0);
+    box(cfg.limb * 0.8, cfg.arm, cfg.limb * 0.8, 0, -cfg.arm / 2, 0, arm);
+    box(cfg.limb * 0.5, 0.35, cfg.limb * 0.5, 0, -cfg.arm - 0.1, 0, arm); // long fingers
+    g.add(arm); limbs.arms.push(arm);
+  }
+  box(cfg.shoulder, torsoH, cfg.depth, 0, legLen + torsoH / 2, 0, g);
+  const head = new THREE.Group(); head.position.set(0, legLen + torsoH + headH / 2 + 0.02, cfg.depth * 0.3); g.add(head);
+  const headD = cfg.head * 0.8;
+  box(cfg.head * 0.8, headH, headD, 0, 0, 0, head);
+  const face = new THREE.Mesh(new THREE.PlaneGeometry(cfg.head * 0.76, headH * 0.94),
+    new THREE.MeshBasicMaterial({ map: loadTex(faceFile), transparent: true, alphaTest: 0.05 }));
+  face.position.z = headD / 2 + 0.005; head.add(face);
+  g.userData = { limbs, head };
+  return g;
+}
+
+// Breadth-first search over open grid cells
+function bfs(sx, sy, tx, ty) {
+  const prev = new Int32Array(N * N).fill(-1), q = [sy * N + sx];
+  prev[q[0]] = q[0];
+  for (let i = 0; i < q.length; i++) {
+    const c = q[i], cx = c % N, cy = (c / N) | 0;
+    if (cx === tx && cy === ty) break;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = cx + dx, ny = cy + dy, n = ny * N + nx;
+      if (isWall(nx, ny) || prev[n] !== -1) continue;
+      prev[n] = c; q.push(n);
+    }
+  }
+  const goal = ty * N + tx;
+  if (prev[goal] === -1) return null;
+  const path = [];
+  for (let c = goal; c !== sy * N + sx; c = prev[c]) path.push([(c % N + 0.5) * CELL, (((c / N) | 0) + 0.5) * CELL]);
+  return path.reverse();
+}
+function bfsDistances(sx, sy) {
+  const dist = new Int32Array(N * N).fill(-1), q = [sy * N + sx];
+  dist[q[0]] = 0;
+  for (let i = 0; i < q.length; i++) {
+    const c = q[i], cx = c % N, cy = (c / N) | 0;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = cx + dx, ny = cy + dy, n = ny * N + nx;
+      if (isWall(nx, ny) || dist[n] !== -1) continue;
+      dist[n] = dist[c] + 1; q.push(n);
+    }
+  }
+  return dist;
+}
+
+// Grid line-of-sight: sample along the segment and stop at the first wall
+function hasLineOfSight(ax, az, bx, bz) {
+  const d = Math.hypot(bx - ax, bz - az), n = Math.ceil(d / 0.25);
+  for (let i = 1; i < n; i++) {
+    const k = i / n;
+    if (isWall(toGrid(ax + (bx - ax) * k), toGrid(az + (bz - az) * k))) return false;
+  }
+  return true;
+}
+
+const SPAWN_CELL = [1, 1];
+function spawnMonsters() {
+  const dist = bfsDistances(...SPAWN_CELL), rng2 = Math.random;
+  const far = [];
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (dist[y * N + x] > 22) far.push([x, y]);
+  const used = [];
+  MONSTER_TYPES.forEach((cfg, i) => {
+    let cell = far[Math.floor(rng2() * far.length)];
+    for (let tries = 0; tries < 30 && used.some(([ux, uy]) => Math.hypot(ux - cell[0], uy - cell[1]) < 10); tries++)
+      cell = far[Math.floor(rng2() * far.length)];
+    used.push(cell);
+    let m = monsters[i];
+    if (!m) {
+      const mesh = buildMonster(cfg, TEXTURES.faces[i % TEXTURES.faces.length]);
+      scene.add(mesh);
+      m = monsters[i] = { cfg, mesh, faceIndex: i % TEXTURES.faces.length, pos: new THREE.Vector3(), vel: new THREE.Vector3(), facing: 0, phase: rng2() * 6 };
+    }
+    m.pos.set((cell[0] + 0.5) * CELL, 0, (cell[1] + 0.5) * CELL);
+    m.vel.set(0, 0, 0);
+    Object.assign(m, { state: 'wander', path: [], repath: 0, lastSeen: null, searchTime: 0, pause: 0 });
+  });
+}
+
+function randomOpenCell() {
+  for (;;) {
+    const x = 1 + Math.floor(Math.random() * (N - 2)), y = 1 + Math.floor(Math.random() * (N - 2));
+    if (!grid[y][x]) return [x, y];
+  }
+}
+
+function monsterSees(m) {
+  const dx = player.pos.x - m.pos.x, dz = player.pos.z - m.pos.z, d = Math.hypot(dx, dz);
+  const range = m.cfg.sight * (player.crouch > 0.5 ? 0.6 : 1);
+  if (d > range) return false;
+  if (d > 3) { // outside close range, the player must be inside the monster's field of view
+    let diff = Math.atan2(dx, dz) - m.facing;
+    diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+    if (Math.abs(diff) > m.cfg.fov / 2) return false;
+  }
+  return hasLineOfSight(m.pos.x, m.pos.z, player.pos.x, player.pos.z);
+}
+
+function setGoal(m, x, z) {
+  const p = bfs(toGrid(m.pos.x), toGrid(m.pos.z), toGrid(x), toGrid(z));
+  m.path = p || [];
+}
+
+function updateMonsters(dt) {
+  if (caught) return;
+  const exposed = flashlight.visible || phoneState !== 'closed';
+  for (const m of monsters) {
+    const sees = exposed && monsterSees(m);
+    if (sees) { m.state = 'chase'; m.lastSeen = [player.pos.x, player.pos.z]; m.searchTime = 0; }
+    else if (m.state === 'chase') { m.state = 'search'; m.repath = 0; }
+
+    let tx = null, tz = null, speed = m.cfg.wander;
+    m.repath -= dt;
+    if (m.state === 'chase') {
+      speed = m.cfg.chase; tx = player.pos.x; tz = player.pos.z; // LOS is clear, so head straight at the player
+    } else {
+      if (m.state === 'search') {
+        speed = m.cfg.chase * 0.8;
+        if (m.repath <= 0 && m.lastSeen) { setGoal(m, m.lastSeen[0], m.lastSeen[1]); m.repath = 0.5; }
+        if (!m.path.length) { // reached the last known position: look around, then give up
+          m.searchTime += dt; speed = 0;
+          m.facing += dt * 1.6;
+          if (m.searchTime > 4) { m.state = 'wander'; m.lastSeen = null; }
+        }
+      } else if (!m.path.length) {
+        if (m.pause > 0) { m.pause -= dt; speed = 0; }
+        else { const [cx, cy] = randomOpenCell(); setGoal(m, (cx + 0.5) * CELL, (cy + 0.5) * CELL); m.pause = 1 + Math.random() * 2; }
+      }
+      if (m.path.length) {
+        [tx, tz] = m.path[0];
+        if (Math.hypot(tx - m.pos.x, tz - m.pos.z) < 0.5) { m.path.shift(); m.path.length ? [tx, tz] = m.path[0] : (tx = null); }
+      }
+    }
+
+    let wx = 0, wz = 0;
+    if (tx !== null && speed > 0) {
+      const dx = tx - m.pos.x, dz = tz - m.pos.z, d = Math.hypot(dx, dz) || 1;
+      wx = dx / d; wz = dz / d;
+    }
+    // Ease velocity toward the wish direction and turn to face it
+    const k = Math.min(1, dt * 6);
+    m.vel.x += (wx * speed - m.vel.x) * k; m.vel.z += (wz * speed - m.vel.z) * k;
+    m.pos.x += m.vel.x * dt; m.pos.z += m.vel.z * dt;
+    collide(m.pos, 0.4, m.vel);
+    if (Math.hypot(m.vel.x, m.vel.z) > 0.3) {
+      let diff = Math.atan2(m.vel.x, m.vel.z) - m.facing;
+      diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+      m.facing += diff * Math.min(1, dt * 7);
+    }
+
+    if (exposed && Math.hypot(player.pos.x - m.pos.x, player.pos.z - m.pos.z) < 0.9) return caughtByMonster();
+  }
+}
+
+function caughtByMonster() {
+  caught = true; keys.Space = false;
+  caughtEl.style.display = 'flex';
+  setTimeout(() => {
+    player.pos.set(1.5 * CELL, 0, 1.5 * CELL); player.vel.set(0, 0, 0); player.yaw = 0; player.pitch = 0;
+    spawnMonsters();
+    caughtEl.style.display = 'none';
+    caught = false;
+  }, 2500);
+}
+
+function updateMonsterVisuals(dt, time) {
+  for (const m of monsters) {
+    const sp = Math.hypot(m.vel.x, m.vel.z), { limbs, head } = m.mesh.userData;
+    m.phase += dt * (1 + sp * 2.2);
+    const swing = Math.sin(m.phase * 2) * Math.min(0.7, sp * 0.22);
+    limbs.legs[0].rotation.x = swing; limbs.legs[1].rotation.x = -swing;
+    limbs.arms[0].rotation.x = -swing * 0.6; limbs.arms[1].rotation.x = swing * 0.6;
+    limbs.arms[0].rotation.z = 0.06 + Math.sin(time * 1.3 + m.phase) * 0.03;
+    limbs.arms[1].rotation.z = -0.06 - Math.sin(time * 1.1 + m.phase) * 0.03;
+    // Head tilts toward the player when hunting
+    const chasing = m.state === 'chase';
+    head.rotation.z += ((chasing ? 0.35 : Math.sin(time * 0.7 + m.phase) * 0.12) - head.rotation.z) * Math.min(1, dt * 5);
+    m.mesh.position.set(m.pos.x, 0, m.pos.z);
+    m.mesh.rotation.y = m.facing;
+  }
+}
+spawnMonsters();
+
+/* ---------- Minimap ---------- */
+const mm = document.getElementById('minimap'), mctx = mm.getContext('2d');
+const mmBase = makeCanvas(N, N), bctx = mmBase.getContext('2d');
+for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+  const dz = inDarkZone(x, y);
+  bctx.fillStyle = grid[y][x] ? (dz ? '#14120a' : '#3a3515') : (dz ? '#6b6334' : '#d9cc7a');
+  bctx.fillRect(x, y, 1, 1);
+}
+const faceImages = TEXTURES.faces.map((f) => { const i = new Image(); i.src = TEXTURE_DIR + f; return i; });
+function drawMinimap() {
+  const S = mm.width;
+  mctx.clearRect(0, 0, S, S);
+  mctx.drawImage(mmBase, 0, 0, S, S);
+  const px = (player.pos.x / WORLD) * S, pz = (player.pos.z / WORLD) * S;
+  mctx.save();
+  mctx.translate(px, pz);
+  mctx.rotate(-player.yaw);
+  mctx.fillStyle = 'rgba(255,60,40,.25)'; // field of view cone
+  mctx.beginPath(); mctx.moveTo(0, 0); mctx.arc(0, 0, 26, -Math.PI / 2 - 0.65, -Math.PI / 2 + 0.65); mctx.closePath(); mctx.fill();
+  mctx.fillStyle = '#ff3b2a';
+  mctx.beginPath(); mctx.moveTo(0, -6); mctx.lineTo(4, 5); mctx.lineTo(-4, 5); mctx.closePath(); mctx.fill();
+  mctx.restore();
+
+  for (const m of monsters) {
+    const x = (m.pos.x / WORLD) * S, y = (m.pos.z / WORLD) * S, r = 10;
+    mctx.fillStyle = '#000';
+    mctx.beginPath(); mctx.arc(x, y, r, 0, Math.PI * 2); mctx.fill();
+    const img = faceImages[m.faceIndex];
+    if (img.complete && img.naturalWidth) mctx.drawImage(img, x - r + 1, y - r + 1, r * 2 - 2, r * 2 - 2);
+    mctx.lineWidth = 2;
+    mctx.strokeStyle = m.state === 'chase' ? '#ff2020' : m.state === 'search' ? '#ff9a20' : '#777';
+    mctx.beginPath(); mctx.arc(x, y, r, 0, Math.PI * 2); mctx.stroke();
+  }
+}
+
+/* ---------- Inventory & pickup props ---------- */
+const ITEMS = {
+  phone: { name: 'Communication Device', icon: '\u{1F4F1}', max: 1 },
+  stool: { name: 'Stool', icon: '\u{1FA91}', max: 1 },
+  plank: { name: 'Wooden Plank', icon: '\u{1FAB5}', max: 16 },
+  nails: { name: 'Screws', icon: '\u{1F529}', max: 64 },
+  ingot: { name: 'Iron Ingot', icon: '\u{1F9F1}', max: 16 },
+  axe: { name: 'Axe', icon: '\u{1FA93}', max: 1 },
+  duck: { name: 'Rubber Duck', icon: '\u{1F986}', max: 16 },
+  bin: { name: 'Trash Bin', icon: '\u{1F5D1}', max: 4 },
+  bottle: { name: 'Water Bottle', icon: '\u{1F4A7}', max: 16 },
+  backpack: { name: 'Backpack', icon: '\u{1F392}', max: 1 },
+  shoes: { name: 'Shoes', icon: '\u{1F45F}', max: 4 },
+  ribbon: { name: 'Red Ribbon', icon: '\u{1F380}', max: 16 },
+  plastic: { name: 'Plastic', icon: '\u267B\uFE0F', max: 64 },
+  fabric: { name: 'Fabric', icon: '\u{1F9F5}', max: 64 },
+  hallpass: { name: 'Hall Pass', icon: '\u{1F3AB}', max: 1 },
+};
+// Shapeless: every grid item must belong to a need, and each need must be met
+const RECIPES = [
+  { out: 'plank', n: 2, needs: [{ ids: ['stool'], n: 1 }] },
+  { out: 'ingot', n: 1, needs: [{ ids: ['nails'], n: 9 }] },
+  { out: 'axe', n: 1, needs: [{ ids: ['ingot'], n: 3 }, { ids: ['plank'], n: 2 }] },
+  { out: 'hallpass', n: 1, needs: [{ ids: ['fabric'], n: 1 }, { ids: ['nails'], n: 1 }, { ids: ['plastic'], n: 7 }] },
+  { out: 'plastic', n: 1, needs: [{ ids: ['duck', 'bin', 'bottle'], n: 1 }] },
+  { out: 'fabric', n: 1, needs: [{ ids: ['backpack', 'shoes', 'ribbon'], n: 1 }] },
+];
+function pluralizeItemName(id, quantity) {
+  const name = ITEMS[id].name;
+  if (id === 'nails' && quantity === 1) return 'Screw';
+  return quantity === 1 || id === 'fabric' || id === 'plastic' || name.endsWith('s') ? name : `${name}s`;
+}
+function formatItemQuantity(id, quantity) {
+  return `${quantity} ${pluralizeItemName(id, quantity)}`;
+}
+function formatRecipeNeed(need) {
+  const names = need.ids.map((id) => pluralizeItemName(id, need.n));
+  const choices = names.length > 1
+    ? `${names.slice(0, -1).join(', ')} or ${names[names.length - 1]}`
+    : names[0];
+  return `${need.n} ${choices}`;
+}
+const recipeList = document.getElementById('recipeList');
+for (const recipe of RECIPES) {
+  const entry = document.createElement('div');
+  entry.className = 'recipe';
+  const output = document.createElement('div');
+  output.className = 'recipe-output';
+  output.textContent = formatItemQuantity(recipe.out, recipe.n);
+  const needs = document.createElement('div');
+  needs.className = 'recipe-needs';
+  needs.textContent = recipe.needs.map(formatRecipeNeed).join(' + ');
+  entry.append(output, needs);
+  recipeList.appendChild(entry);
+}
+const GRID0 = 36;
+function matchRecipe() {
+  const cells = slots.slice(GRID0).filter(Boolean);
+  if (!cells.length) return null;
+  return RECIPES.find((r) =>
+    cells.every((c) => r.needs.some((nd) => nd.ids.includes(c.id))) &&
+    r.needs.every((nd) => cells.reduce((t, c) => t + (nd.ids.includes(c.id) ? c.n : 0), 0) >= nd.n)) || null;
+}
+function takeCraftOutput() {
+  const r = matchRecipe();
+  if (!r || (cursor && (cursor.id !== r.out || cursor.n + r.n > ITEMS[r.out].max))) return;
+  for (const nd of r.needs) {
+    let left = nd.n;
+    for (let i = GRID0; i < slots.length && left > 0; i++) {
+      const s = slots[i];
+      if (!s || !nd.ids.includes(s.id)) continue;
+      const a = Math.min(left, s.n); s.n -= a; left -= a;
+      if (s.n <= 0) slots[i] = null;
+    }
+  }
+  if (cursor) cursor.n += r.n; else cursor = { id: r.out, n: r.n };
+  renderInv();
+}
+const slots = Array(GRID0 + 9).fill(null); // 0-8 hotbar, 9-35 main, 36+ crafting grid (3x3)
+slots[0] = { id: 'phone', n: 1 };
+let cursor = null, selected = 0, invOpen = false;
+
+function addItem(id, n) {
+  const max = ITEMS[id].max;
+  for (let i = 0; i < GRID0 && n > 0; i++) { const s = slots[i]; if (s && s.id === id && s.n < max) { const a = Math.min(n, max - s.n); s.n += a; n -= a; } }
+  for (let i = 0; i < GRID0 && n > 0; i++) if (!slots[i]) { const a = Math.min(n, max); slots[i] = { id, n: a }; n -= a; }
+  renderInv();
+  return n === 0;
+}
+
+const hotbarEl = document.getElementById('hotbar'), invMainEl = document.getElementById('invMain'), invHotEl = document.getElementById('invHot');
+const cursorEl = document.getElementById('cursorItem'), invPanel = document.getElementById('invPanel');
+function makeSlot(parent, i, clickable) {
+  const d = document.createElement('div'); d.className = 'slot';
+  if (clickable) {
+    d.addEventListener('mousedown', (e) => { e.preventDefault(); slotClick(i, e.button === 2); });
+    d.addEventListener('contextmenu', (e) => e.preventDefault());
+  }
+  parent.appendChild(d); return d;
+}
+const hotSlots = [], invSlots = [];
+for (let i = 0; i < 9; i++) hotSlots[i] = makeSlot(hotbarEl, i, false);
+for (let i = 9; i < 36; i++) invSlots[i] = makeSlot(invMainEl, i, true);
+for (let i = 0; i < 9; i++) invSlots[i] = makeSlot(invHotEl, i, true);
+for (let i = GRID0; i < slots.length; i++) invSlots[i] = makeSlot(document.getElementById('craftGrid'), i, true);
+const craftOutEl = document.getElementById('craftOut');
+craftOutEl.addEventListener('mousedown', (e) => { e.preventDefault(); takeCraftOutput(); });
+
+// Inventory icons: drop assets/items/<id>.png to override; falls back to the emoji
+const iconState = {};
+function itemIcon(id) {
+  if (iconState[id] === false) return ITEMS[id].icon;
+  const img = document.createElement('img');
+  img.src = 'assets/items/' + id + '.png'; img.alt = ITEMS[id].icon; img.draggable = false;
+  img.className = 'icon';
+  img.onerror = () => { iconState[id] = false; img.replaceWith(ITEMS[id].icon); };
+  return img;
+}
+function fillSlot(el, s) {
+  el.textContent = ''; el.title = s ? ITEMS[s.id].name : '';
+  if (!s) return;
+  el.append(itemIcon(s.id));
+  if (s.n > 1) { const c = document.createElement('span'); c.className = 'ct'; c.textContent = s.n; el.appendChild(c); }
+}
+function renderInv() {
+  for (let i = 0; i < slots.length; i++) { if (i < 9) fillSlot(hotSlots[i], slots[i]); fillSlot(invSlots[i], slots[i]); }
+  const rec = matchRecipe();
+  fillSlot(craftOutEl, rec ? { id: rec.out, n: rec.n } : null);
+  hotSlots.forEach((el, i) => el.classList.toggle('sel', i === selected));
+  invSlots.forEach((el, i) => el.classList.toggle('sel', i === selected));
+  updateHeld();
+  fillSlot(cursorEl, cursor); cursorEl.title = '';
+  cursorEl.style.display = invOpen && cursor ? 'block' : 'none';
+}
+function selectSlot(i) { selected = (i + 9) % 9; renderInv(); }
+
+function slotClick(i, right) {
+  const s = slots[i];
+  if (!cursor) {
+    if (!s) return;
+    if (right && s.n > 1) { const h = Math.ceil(s.n / 2); cursor = { id: s.id, n: h }; s.n -= h; }
+    else { cursor = s; slots[i] = null; }
+  } else if (!s) {
+    if (right) { slots[i] = { id: cursor.id, n: 1 }; cursor.n--; } else { slots[i] = cursor; cursor = null; }
+  } else if (s.id === cursor.id && s.n < ITEMS[s.id].max) {
+    const a = right ? 1 : Math.min(cursor.n, ITEMS[s.id].max - s.n);
+    s.n += a; cursor.n -= a;
+  } else if (!right) { slots[i] = cursor; cursor = s; }
+  if (cursor && cursor.n <= 0) cursor = null;
+  renderInv();
+}
+
+function toggleInventory() {
+  invOpen = !invOpen;
+  invPanel.classList.toggle('open', invOpen);
+  if (invOpen) {
+    for (const k in keys) keys[k] = false;
+    document.exitPointerLock();
+  } else {
+    if (cursor) { addItem(cursor.id, cursor.n); cursor = null; }
+    canvas.requestPointerLock();
+  }
+  renderInv();
+}
+addEventListener('mousemove', (e) => { cursorEl.style.left = e.clientX + 'px'; cursorEl.style.top = e.clientY + 'px'; });
+addEventListener('wheel', (e) => { if (document.pointerLockElement === canvas) selectSlot(selected + Math.sign(e.deltaY)); });
+
+// Props
+const woodMat = new THREE.MeshPhongMaterial({ color: 0x8a5a2b }), metalMat = new THREE.MeshPhongMaterial({ color: 0x555555 });
+const props = [];
+function cyl(r, h, x, y, z, mat, parent) {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 10), mat); m.position.set(x, y, z); parent.add(m); return m;
+}
+const bodyMat = (c) => new THREE.MeshPhongMaterial({ color: c });
+function bx(w, h, d, x, y, z, mat, parent) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); parent.add(m); return m;
+}
+let phoneScreenMat = null; // held phone screen: black while the phone UI is closed
+const PROP_BUILDERS = {
+  phone(g) {
+    bx(0.08, 0.16, 0.012, 0, 0.08, 0, bodyMat(0x1a1a1a), g);
+    phoneScreenMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+    bx(0.068, 0.13, 0.002, 0, 0.082, 0.007, phoneScreenMat, g);
+  },
+  duck(g) {
+    const y = bodyMat(0xffd800);
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 8), y); body.position.y = 0.1; body.scale.set(1.2, 0.9, 1); g.add(body);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.06, 12, 8), y); head.position.set(0.1, 0.2, 0); g.add(head);
+    bx(0.06, 0.02, 0.05, 0.17, 0.19, 0, bodyMat(0xff7a00), g);
+  },
+  bin(g) {
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.16, 0.5, 14, 1, true), new THREE.MeshPhongMaterial({ color: 0x4a5a4a, side: THREE.DoubleSide }));
+    m.position.y = 0.25; g.add(m);
+    cyl(0.16, 0.02, 0, 0.01, 0, bodyMat(0x333d33), g);
+  },
+  bottle(g) {
+    cyl(0.04, 0.2, 0, 0.1, 0, new THREE.MeshPhongMaterial({ color: 0x8fd0ff, transparent: true, opacity: 0.7 }), g);
+    cyl(0.018, 0.04, 0, 0.22, 0, bodyMat(0x1b6fd1), g);
+  },
+  backpack(g) {
+    bx(0.32, 0.42, 0.16, 0, 0.21, 0, bodyMat(0x7a1f1f), g);
+    bx(0.24, 0.16, 0.06, 0, 0.12, 0.1, bodyMat(0x5e1717), g);
+  },
+  shoes(g) {
+    for (const s of [-1, 1]) { bx(0.1, 0.07, 0.26, s * 0.08, 0.035, 0, bodyMat(0xf0f0f0), g); bx(0.1, 0.03, 0.27, s * 0.08, 0.015, 0, bodyMat(0x222222), g); }
+  },
+  ribbon(g) {
+    bx(0.5, 0.01, 0.04, 0, 0.005, 0, bodyMat(0xd01818), g);
+    bx(0.05, 0.03, 0.05, 0, 0.02, 0, bodyMat(0xa01010), g);
+  },
+  stool(g) {
+    cyl(0.22, 0.06, 0, 0.5, 0, woodMat, g);
+    for (let i = 0; i < 3; i++) { const a = i * 2.094; cyl(0.025, 0.5, Math.cos(a) * 0.15, 0.25, Math.sin(a) * 0.15, woodMat, g); }
+  },
+  plank(g) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.04, 0.14), woodMat); m.position.y = 0.02; g.add(m);
+  },
+  nails(g) {
+    for (let i = 0; i < 12; i++) {
+      const n = cyl(0.01, 0.08, (Math.random() - 0.5) * 0.18, 0.015 + Math.random() * 0.03, (Math.random() - 0.5) * 0.18, metalMat, g);
+      n.rotation.set(Math.random() * 3, 0, Math.random() * 3);
+    }
+  },
+  plastic(g) {
+    bx(0.14, 0.14, 0.03, 0, 0.07, 0, new THREE.MeshPhongMaterial({ color: 0x4aa8d8, transparent: true, opacity: 0.8 }), g);
+  },
+  fabric(g) {
+    bx(0.2, 0.015, 0.16, 0, 0.01, 0, bodyMat(0xb85c9e), g);
+    bx(0.2, 0.015, 0.16, 0.01, 0.025, 0.01, bodyMat(0xd070b4), g);
+  },
+  hallpass(g) {
+    bx(0.2, 0.12, 0.005, 0, 0.06, 0, bodyMat(0xf2e8c0), g);
+    bx(0.2, 0.025, 0.006, 0, 0.1, 0, bodyMat(0xc02020), g);
+  },
+  ingot(g) {
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.06, 0.06, 4), new THREE.MeshPhongMaterial({ color: 0xb8bcc4, shininess: 80 }));
+    m.rotation.y = Math.PI / 4;
+    m.scale.set(1.8, 1, 1);
+    m.position.y = 0.03;
+    g.add(m);
+  },
+  axe(g) {
+    bx(0.03, 0.5, 0.03, 0, 0.25, 0, woodMat, g);
+    bx(0.04, 0.14, 0.2, 0, 0.42, -0.09, new THREE.MeshPhongMaterial({ color: 0xb8bcc4, shininess: 80 }), g);
+    bx(0.045, 0.1, 0.03, 0, 0.42, 0.02, metalMat, g);
+  },
+};
+
+const heldModels = {};
+const heldRoot = new THREE.Group();
+camera.add(heldRoot);
+heldRoot.position.set(0.3, -0.28, -0.55);
+function heldModel(id) {
+  if (heldModels[id]) return heldModels[id];
+  const built = new THREE.Group();
+  PROP_BUILDERS[id](built);
+  const box = new THREE.Box3().setFromObject(built);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z) || 1;
+  const scale = (id === 'axe' ? 0.6 : 0.3) / maxDim;
+  built.position.sub(center);
+  built.scale.setScalar(scale);
+  built.position.multiplyScalar(scale);
+
+  const wrap = new THREE.Group();
+  wrap.add(built);
+  if (id === 'axe') wrap.rotation.set(0, 0.3, -0.5);
+  else if (id === 'plank') wrap.rotation.set(0.3, 0.8, 0.2);
+  else wrap.rotation.set(0.3, -0.6, 0);
+  wrap.visible = false;
+  heldRoot.add(wrap);
+  heldModels[id] = wrap;
+  return wrap;
+}
+function updateHeld() {
+  for (const id in heldModels) heldModels[id].visible = false;
+  const selectedItem = slots[selected];
+  if (selectedItem && PROP_BUILDERS[selectedItem.id]) heldModel(selectedItem.id).visible = true;
+}
+
+const PROP_COUNTS = { stool: 12, plank: 20, nails: 16, duck: 8, bin: 8, bottle: 14, backpack: 6, shoes: 8, ribbon: 8 };
+for (const [id, count] of Object.entries(PROP_COUNTS)) for (let k = 0; k < count; k++) {
+  const g = new THREE.Group();
+  PROP_BUILDERS[id](g);
+  const hit = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.5, 0.6), new THREE.MeshBasicMaterial()); // invisible, widens the click target
+  hit.visible = false; hit.position.y = 0.25; g.add(hit);
+  let cell;
+  do cell = randomOpenCell(); while (cell[0] === SPAWN_CELL[0] && cell[1] === SPAWN_CELL[1]);
+  g.position.set((cell[0] + 0.5) * CELL + (Math.random() - 0.5) * 2, 0, (cell[1] + 0.5) * CELL + (Math.random() - 0.5) * 2);
+  g.rotation.y = Math.random() * Math.PI * 2;
+  g.userData = { id, n: id === 'nails' ? 4 + Math.floor(Math.random() * 9) : 1 };
+  scene.add(g); props.push(g);
+}
+
+const raycaster = new THREE.Raycaster(); raycaster.far = 3;
+function targetProp() {
+  camera.updateMatrixWorld();
+  raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+  const hit = raycaster.intersectObjects(props, true)[0];
+  if (!hit || !hasLineOfSight(player.pos.x, player.pos.z, hit.point.x, hit.point.z)) return null;
+  let o = hit.object; while (!props.includes(o)) o = o.parent;
+  return o;
+}
+const hintEl = document.getElementById('hint');
+function updateHint() {
+  const p = document.pointerLockElement === canvas && !invOpen && !caught ? targetProp() : null;
+  hintEl.style.display = p ? 'block' : 'none';
+  if (p) hintEl.textContent = performance.now() < fullUntil ? 'Inventory full' : 'Click to pick up ' + ITEMS[p.userData.id].name;
+}
+let fullUntil = 0;
+addEventListener('mousedown', (e) => {
+  if (e.button !== 0 || document.pointerLockElement !== canvas || invOpen || caught) return;
+  const p = targetProp();
+  if (!p) return;
+  if (addItem(p.userData.id, p.userData.n)) { scene.remove(p); props.splice(props.indexOf(p), 1); }
+  else fullUntil = performance.now() + 1500;
+});
+renderInv();
+
+/* ---------- Loop ---------- */
+const posEl = document.getElementById('pos'), stamEl = document.querySelector('#stamina i');
+function resize() {
+  renderer.setSize(innerWidth, innerHeight, false);
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize); resize();
+
+const DAY = new THREE.Color(0x8a7d3c), NIGHT = new THREE.Color(0x000000), skyColor = new THREE.Color();
+const flashEl = document.getElementById('flash');
+let last = performance.now(), t = 0;
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now; t += dt;
+  // Sub-step so fast movement can't tunnel through walls
+  const steps = 3;
+  for (let i = 0; i < steps; i++) { update(dt / steps); updateMonsters(dt / steps); }
+  updateMonsterVisuals(dt, t);
+  alertEl.style.opacity = monsters.some((m) => m.state === 'chase') && !caught ? 1 : 0;
+  flickerMat.color.setScalar(Math.sin(t * 47) * Math.sin(t * 13) > 0.55 ? 0.35 : 1).multiply(new THREE.Color(0xfffbd0));
+  const dark = darknessAt(player.pos.x, player.pos.z);
+  ambient.intensity = 0.9 - 0.87 * dark;
+  hemi.intensity = 0.5 - 0.48 * dark;
+  lamp.intensity = (12 + Math.sin(t * 60) * (Math.sin(t * 7) > 0.9 ? 4 : 0.3)) * (1 - dark);
+  flashlight.intensity = 70 * (Math.sin(t * 31) * Math.sin(t * 5.3) > 0.97 ? 0.5 : 1);
+  skyColor.copy(DAY).lerp(NIGHT, dark);
+  scene.background = skyColor; scene.fog.color.copy(skyColor);
+  scene.fog.near = 4 - 3 * dark; scene.fog.far = 38 - 14 * dark;
+  flashEl.textContent = flashlight.visible ? 'FLASHLIGHT ON' : '';
+  torchBtn.classList.toggle('on', flashlight.visible);
+  updateHint();
+  if (phoneState !== 'closed' && document.getElementById('app-map').classList.contains('on')) drawMinimap();
+  posEl.textContent = `x ${(player.pos.x / CELL).toFixed(1)}  y ${(player.pos.z / CELL).toFixed(1)}`;
+  stamEl.style.width = (player.stamina * 100) + '%';
+  if (phoneScreenMat) phoneScreenMat.color.set(phoneState === 'closed' ? 0x000000 : 0x3a8fd0);
+  const isMoving = Math.hypot(player.vel.x, player.vel.z) > 0.08;
+  heldRoot.position.y = -0.28 + Math.sin(t * 2) * 0.004 + (isMoving ? Math.sin(t * 10) * 0.012 : 0);
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
