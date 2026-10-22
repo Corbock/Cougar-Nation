@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#11130f">
+  <title>Cougar Nation | After Hours</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #11130f;
+      --panel: rgba(19, 22, 17, .88);
+      --paper: #f1f0e8;
+      --muted: #aaa99d;
+      --acid: #c8ed4c;
+      --rust: #e77948;
+      --line: rgba(241, 240, 232, .19);
+      --display: "Barlow Condensed", Impact, sans-serif;
+      --body: "DM Sans", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      color: var(--paper);
+      background: var(--ink);
+      font-family: var(--body);
+    }
+    button, input { font: inherit; }
+    button { color: inherit; }
+    .scene {
+      min-height: 100vh;
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+      background-image: linear-gradient(90deg, rgba(11, 13, 10, .96) 0%, rgba(11, 13, 10, .84) 42%, rgba(11, 13, 10, .4) 100%), linear-gradient(0deg, rgba(11, 13, 10, .82), transparent 45%), url("https://images.unsplash.com/photo-1511818966892-d7d671e672a2?auto=format&fit=crop&w=2400&q=85");
+      background-size: cover;
+      background-position: center;
+    }
+    .scene::before {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      inset: 0;
+      opacity: .14;
+      pointer-events: none;
+      background-image: repeating-linear-gradient(0deg, transparent 0 3px, rgba(255,255,255,.12) 4px, transparent 5px);
+      mix-blend-mode: soft-light;
+    }
+    .topbar {
+      height: 82px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 clamp(22px, 5vw, 76px);
+      border-bottom: 1px solid var(--line);
+    }
+    .brand { display: flex; align-items: center; gap: 13px; }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border: 1px solid var(--acid);
+      color: var(--acid);
+      font: 700 21px var(--display);
+      transform: rotate(-7deg);
+    }
+    .brand-name { font: 700 18px var(--display); letter-spacing: 1px; text-transform: uppercase; }
+    .brand-sub { color: var(--muted); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; }
+    .session { display: flex; align-items: center; gap: 10px; color: #d0d0c6; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
+    .online-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--acid); box-shadow: 0 0 12px var(--acid); }
+    main {
+      display: grid;
+      grid-template-columns: minmax(300px, 490px) minmax(200px, 1fr);
+      min-height: calc(100vh - 82px);
+      padding: clamp(36px, 6vh, 72px) clamp(22px, 8vw, 124px) 72px;
+      gap: 8vw;
+      align-items: center;
+    }
+    .content { max-width: 510px; animation: arrive .45s ease both; }
+    .eyebrow { display: flex; align-items: center; gap: 10px; color: var(--acid); font-size: 10px; letter-spacing: 2.6px; text-transform: uppercase; }
+    .eyebrow::before { content: ""; width: 24px; height: 1px; background: var(--acid); }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 {
+      margin: 16px 0 7px;
+      font: 800 clamp(58px, 8vw, 108px)/.81 var(--display);
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+    h1 span { color: var(--acid); }
+    .subtitle { color: #d2d1c5; margin-bottom: 32px; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; }
+    .menu-list { display: grid; gap: 5px; width: min(100%, 360px); }
+    .menu-button {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-height: 55px;
+      width: 100%;
+      padding: 0 17px;
+      border: 1px solid transparent;
+      background: rgba(20, 23, 18, .56);
+      text-align: left;
+      cursor: pointer;
+      transition: background .18s, border-color .18s, padding .18s;
+    }
+    .menu-button:hover, .menu-button:focus-visible { border-color: rgba(200, 237, 76, .55); background: rgba(200, 237, 76, .11); padding-left: 23px; outline: none; }
+    .menu-index { color: var(--acid); font: 600 13px var(--display); }
+    .menu-label { flex: 1; font: 600 20px var(--display); letter-spacing: .6px; text-transform: uppercase; }
+    .arrow { color: var(--muted); font-size: 18px; }
+    .footer-line { display: flex; gap: 26px; margin-top: 46px; color: #a7a69a; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; }
+    .footer-line strong { color: var(--paper); font-weight: 500; }
+    .side-note { justify-self: end; align-self: end; width: min(300px, 100%); margin-bottom: 2px; border-left: 1px solid var(--rust); padding: 2px 0 3px 17px; color: #d2d1c5; font-size: 11px; line-height: 1.6; }
+    .side-note strong { display: block; margin-bottom: 5px; color: var(--rust); font-size: 9px; letter-spacing: 1.8px; text-transform: uppercase; }
+    .screen-title { margin: 14px 0 22px; font: 700 clamp(42px, 5.5vw, 68px)/.9 var(--display); text-transform: uppercase; }
+    .screen-title span { color: var(--acid); }
+    .back-button { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 26px; padding: 8px 0; border: 0; background: none; color: #c3c2b8; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; }
+    .back-button:hover { color: var(--acid); }
+    .option-list { display: grid; width: min(100%, 480px); border-top: 1px solid var(--line); }
+    .option {
+      display: grid;
+      grid-template-columns: 48px 1fr 18px;
+      align-items: center;
+      min-height: 75px;
+      gap: 11px;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+    }
+    .option:hover .option-title { color: var(--acid); }
+    .option-icon { color: var(--rust); font: 600 22px var(--display); }
+    .option-title { margin-bottom: 3px; font: 600 20px var(--display); text-transform: uppercase; transition: color .15s; }
+    .option-desc { color: var(--muted); font-size: 10px; }
+    .option-arrow { color: var(--muted); }
+    .locker-layout { display: grid; grid-template-columns: minmax(130px, 200px) minmax(180px, 270px); gap: 25px; align-items: center; }
+    .portrait {
+      position: relative;
+      height: 286px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: #4a4c3c;
+    }
+    .portrait img { width: 100%; height: 100%; object-fit: cover; filter: saturate(.55) contrast(1.08); }
+    .portrait::after { content: ""; position: absolute; inset: 40% 0 0; background: linear-gradient(transparent, rgba(12,14,11,.84)); }
+    .portrait-label { position: absolute; z-index: 1; bottom: 12px; left: 12px; font: 600 18px var(--display); text-transform: uppercase; }
+    .custom-controls { display: grid; gap: 18px; }
+    .control-group label, .control-heading { display: block; margin-bottom: 9px; color: #c5c4b9; font-size: 9px; letter-spacing: 1.6px; text-transform: uppercase; }
+    .swatches { display: flex; gap: 8px; }
+    .swatch { width: 27px; height: 27px; padding: 0; border: 2px solid transparent; border-radius: 50%; cursor: pointer; }
+    .swatch[aria-pressed="true"] { outline: 1px solid var(--paper); outline-offset: 3px; }
+    .swatch:hover { transform: scale(1.08); }
+    .select-control { width: 100%; padding: 10px 11px; border: 1px solid var(--line); border-radius: 0; background: rgba(12,14,11,.8); color: var(--paper); font-size: 11px; }
+    .save-button, .primary-button { min-height: 42px; padding: 0 16px; border: 0; background: var(--acid); color: var(--ink); font: 700 15px var(--display); letter-spacing: .6px; text-transform: uppercase; cursor: pointer; }
+    .save-button:hover, .primary-button:hover { background: #dafa71; }
+    .setting-list { display: grid; width: min(100%, 460px); border-top: 1px solid var(--line); }
+    .setting-row { min-height: 58px; display: flex; align-items: center; justify-content: space-between; gap: 15px; border-bottom: 1px solid var(--line); }
+    .setting-name { font: 600 17px var(--display); text-transform: uppercase; }
+    .setting-value { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 10px; }
+    input[type="range"] { width: 130px; accent-color: var(--acid); }
+    input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--acid); }
+    .notice { min-height: 18px; margin-top: 15px; color: var(--acid); font-size: 11px; }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .toast { position: fixed; right: 24px; bottom: 24px; z-index: 4; padding: 13px 17px; border-left: 2px solid var(--acid); background: #1a1d17; color: var(--paper); font-size: 12px; animation: arrive .2s ease both; }
+    .toast[hidden] { display: none; }
+    @keyframes arrive { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 700px) {
+      .topbar { height: 68px; padding: 0 20px; }
+      main { min-height: calc(100vh - 68px); grid-template-columns: 1fr; align-content: center; gap: 32px; padding: 36px 24px 28px; }
+      .side-note { justify-self: start; align-self: auto; width: min(100%, 360px); }
+      h1 { font-size: clamp(60px, 18vw, 88px); }
+      .footer-line { margin-top: 28px; }
+      .locker-layout { grid-template-columns: minmax(110px, 38%) 1fr; gap: 18px; }
+      .portrait { height: 245px; }
+      .session { font-size: 9px; }
+    }
+    @media (max-width: 390px) {
+      .locker-layout { grid-template-columns: 1fr; }
+      .portrait { height: 190px; width: 140px; }
+      .custom-controls { grid-template-columns: 1fr 1fr; }
+      .save-button { grid-column: 1 / -1; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <div class="scene">
+    <header class="topbar">
+      <div class="brand" aria-label="Cougar Nation">
+        <div class="brand-mark" aria-hidden="true">CN</div>
+        <div><div class="brand-name">Cougar Nation</div><div class="brand-sub">After-hours program</div></div>
+      </div>
+      <div class="session"><span class="online-dot" aria-hidden="true"></span><span>Systems online</span></div>
+    </header>
+    <main>
+      <section class="content" aria-live="polite">
+        <div class="screen active" id="home-screen">
+          <div class="eyebrow">The campus is still open</div>
+          <h1>Cougar<br><span>Nation</span></h1>
+          <p class="subtitle">No late passes after midnight</p>
+          <nav class="menu-list" aria-label="Main menu">
+            <button class="menu-button" data-screen="single"><span class="menu-index">01</span><span class="menu-label">Single Player</span><span class="arrow" aria-hidden="true">↗</span></button>
+            <button class="menu-button" data-screen="multiplayer"><span class="menu-index">02</span><span class="menu-label">Multiplayer</span><span class="arrow" aria-hidden="true">↗</span></button>
+            <button class="menu-button" data-screen="locker"><span class="menu-index">03</span><span class="menu-label">Locker</span><span class="arrow" aria-hidden="true">↗</span></button>
+            <button class="menu-button" data-screen="settings"><span class="menu-index">04</span><span class="menu-label">Settings</span><span class="arrow" aria-hidden="true">↗</span></button>
+          </nav>
+          <div class="footer-line"><span>Build <strong>01.04.26</strong></span><span>Players <strong>1 / 4</strong></span></div>
+        </div>
+
+        <div class="screen" id="single-screen">
+          <button class="back-button" data-screen="home">← &nbsp; Main menu</button>
+          <div class="eyebrow">Your story, your rules</div>
+          <h2 class="screen-title">Single <span>player</span></h2>
+          <div class="option-list">
+            <button class="option" data-action="new-game"><span class="option-icon">01</span><span><span class="option-title">New game</span><span class="option-desc">Start a fresh night on campus</span></span><span class="option-arrow">↗</span></button>
+            <button class="option" data-action="load-game"><span class="option-icon">02</span><span><span class="option-title">Load save</span><span class="option-desc">Continue from your last session</span></span><span class="option-arrow">↗</span></button>
+          </div>
+          <div class="notice" id="single-notice" role="status"></div>
+        </div>
+
+        <div class="screen" id="multiplayer-screen">
+          <button class="back-button" data-screen="home">← &nbsp; Main menu</button>
+          <div class="eyebrow">Nobody makes it out alone</div>
+          <h2 class="screen-title">Multi<span>player</span></h2>
+          <div class="option-list">
+            <button class="option" data-action="join-match"><span class="option-icon">01</span><span><span class="option-title">Join a match</span><span class="option-desc">Enter a friend's invite code</span></span><span class="option-arrow">↗</span></button>
+            <button class="option" data-action="create-match"><span class="option-icon">02</span><span><span class="option-title">Create a match</span><span class="option-desc">Host a private session</span></span><span class="option-arrow">↗</span></button>
+            <button class="option" data-action="public-match"><span class="option-icon">03</span><span><span class="option-title">Public match</span><span class="option-desc">Find a crew and jump in</span></span><span class="option-arrow">↗</span></button>
+          </div>
+          <div class="notice" id="multiplayer-notice" role="status"></div>
+        </div>
+
+        <div class="screen" id="locker-screen">
+          <button class="back-button" data-screen="home">← &nbsp; Main menu</button>
+          <div class="eyebrow">Make it through in style</div>
+          <h2 class="screen-title">Your <span>locker</span></h2>
+          <div class="locker-layout">
+            <div class="portrait">
+              <img id="portrait-image" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=700&h=1000&q=85" alt="Character preview">
+              <div class="portrait-label" id="character-name">The New Kid</div>
+            </div>
+            <div class="custom-controls">
+              <div class="control-group"><span class="control-heading">Jacket color</span><div class="swatches" aria-label="Jacket color">
+                <button class="swatch" style="background:#c8ed4c" aria-label="Lime" aria-pressed="true" data-color="#c8ed4c"></button>
+                <button class="swatch" style="background:#e77948" aria-label="Rust" aria-pressed="false" data-color="#e77948"></button>
+                <button class="swatch" style="background:#789b9c" aria-label="Teal" aria-pressed="false" data-color="#789b9c"></button>
+                <button class="swatch" style="background:#d8d1bd" aria-label="Stone" aria-pressed="false" data-color="#d8d1bd"></button>
+              </div></div>
+              <div class="control-group"><label for="outfit">Outfit</label><select class="select-control" id="outfit"><option>Varsity jacket</option><option>Campus security</option><option>Track team</option><option>Night study</option></select></div>
+              <div class="control-group"><label for="character">Character</label><select class="select-control" id="character"><option>The New Kid</option><option>Hall Monitor</option><option>Transfer Student</option></select></div>
+              <button class="save-button" id="save-look">Save look</button>
+            </div>
+          </div>
+          <div class="notice" id="locker-notice" role="status"></div>
+        </div>
+
+        <div class="screen" id="settings-screen">
+          <button class="back-button" data-screen="home">← &nbsp; Main menu</button>
+          <div class="eyebrow">Tune your late pass</div>
+          <h2 class="screen-title">Set<span>tings</span></h2>
+          <div class="setting-list">
+            <div class="setting-row"><label class="setting-name" for="master-volume">Master volume</label><div class="setting-value"><input id="master-volume" type="range" min="0" max="100" value="78"><span id="volume-value">78%</span></div></div>
+            <div class="setting-row"><label class="setting-name" for="sensitivity">Look sensitivity</label><div class="setting-value"><input id="sensitivity" type="range" min="1" max="10" value="5"><span id="sensitivity-value">5</span></div></div>
+            <div class="setting-row"><label class="setting-name" for="subtitles">Subtitles</label><div class="setting-value"><input id="subtitles" type="checkbox" checked></div></div>
+            <div class="setting-row"><label class="setting-name" for="screen-shake">Screen shake</label><div class="setting-value"><input id="screen-shake" type="checkbox" checked></div></div>
+          </div>
+          <div class="notice" id="settings-notice" role="status"></div>
+        </div>
+      </section>
+      <aside class="side-note"><strong>Campus notice / 00:17</strong>East wing lights are on again. Nobody is scheduled in that building tonight.</aside>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" hidden></div>
+  <script>
+    const screens = [...document.querySelectorAll('.screen')];
+    const toast = document.querySelector('#toast');
+    let toastTimeout;
+
+    function showScreen(name) {
+      screens.forEach((screen) => screen.classList.toggle('active', screen.id === `${name}-screen`));
+      document.querySelectorAll('.notice').forEach((notice) => { notice.textContent = ''; });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.hidden = false;
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => { toast.hidden = true; }, 2600);
+    }
+
+    document.querySelectorAll('[data-screen]').forEach((button) => {
+      button.addEventListener('click', () => showScreen(button.dataset.screen));
+    });
+
+    document.querySelectorAll('[data-action]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const action = button.dataset.action;
+        if (action === 'load-game') {
+          document.querySelector('#single-notice').textContent = 'No save data found. Start a new game to begin.';
+          return;
+        }
+        if (action === 'new-game') {
+          window.location.href = 'game.html';
+          return;
+        }
+        const messages = {
+          'join-match': 'Invite code entry is not connected yet.',
+          'create-match': 'Match hosting is not connected yet.',
+          'public-match': 'Public matchmaking is not connected yet.'
+        };
+        showToast(messages[action]);
+      });
+    });
+
+    document.querySelectorAll('.swatch').forEach((swatch) => {
+      swatch.addEventListener('click', () => {
+        document.querySelectorAll('.swatch').forEach((item) => item.setAttribute('aria-pressed', String(item === swatch)));
+        document.querySelector('.portrait-label').style.color = swatch.dataset.color;
+      });
+    });
+
+    document.querySelector('#character').addEventListener('change', (event) => {
+      document.querySelector('#character-name').textContent = event.target.value;
+    });
+    document.querySelector('#save-look').addEventListener('click', () => {
+      document.querySelector('#locker-notice').textContent = 'Look saved for this session.';
+    });
+    document.querySelector('#master-volume').addEventListener('input', (event) => {
+      document.querySelector('#volume-value').textContent = `${event.target.value}%`;
+    });
+    document.querySelector('#sensitivity').addEventListener('input', (event) => {
+      document.querySelector('#sensitivity-value').textContent = event.target.value;
+    });
+    document.querySelectorAll('.setting-list input').forEach((control) => {
+      control.addEventListener('change', () => {
+        document.querySelector('#settings-notice').textContent = 'Settings updated for this session.';
+      });
+    });
+  </script>
+</body>
+</html>
