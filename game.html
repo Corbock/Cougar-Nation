@@ -42,6 +42,30 @@
     .recipe:last-child { border-bottom: 0; }
     .recipe-output { font-weight: 600; margin-bottom: 4px; }
     .recipe-needs { color: #bbb; font-size: 13px; line-height: 1.5; }
+    #treemuBar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 14px; }
+    #treemuMoney { color: #8fe388; font-weight: 700; }
+    #treemuTabs { display: flex; gap: 6px; margin-bottom: 8px; }
+    #treemuTabs button { flex: 1; padding: 6px; border: 0; border-radius: 8px; background: #2b2b2b; color: #ddd; cursor: pointer; }
+    #treemuTabs button.on { background: #3d5a80; color: #fff; }
+    #treemuStatus { min-height: 18px; margin-bottom: 6px; font-size: 13px; color: #f0c674; }
+    #treemuList { min-height: 0; overflow-y: auto; }
+    .tm-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #444; font-size: 14px; }
+    .tm-row .nm { flex: 1; }
+    .tm-row .pr { color: #8fe388; min-width: 38px; text-align: right; }
+    .tm-row button { padding: 4px 8px; border: 0; border-radius: 6px; background: #3d5a80; color: #fff; cursor: pointer; font-size: 12px; }
+    .tm-row button:disabled { opacity: .35; cursor: not-allowed; }
+    .tm-empty { color: #999; padding: 14px 0; font-size: 13px; }
+    #deliveryNote { position: fixed; top: 14%; left: 50%; transform: translateX(-50%); padding: 8px 16px; background: rgba(0,0,0,.65); color: #f0c674; border-radius: 8px; font-size: 15px; display: none; z-index: 5; pointer-events: none; }
+    #stkTabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+    #stkTabs button { padding: 4px 6px; border: 0; border-radius: 6px; background: #2b2b2b; color: #ddd; cursor: pointer; font-size: 11px; }
+    #stkTabs button.on { background: #3d5a80; color: #fff; }
+    #stkPrice { font-size: 20px; font-weight: 700; }
+    #stkChange { font-size: 13px; margin-left: 6px; }
+    #stkGraph { width: 100%; height: 120px; background: #0e0e0e; border-radius: 8px; margin: 8px 0; display: block; }
+    #stkInfo { font-size: 13px; color: #bbb; margin-bottom: 8px; line-height: 1.5; }
+    #stkBtns { display: flex; gap: 6px; }
+    #stkBtns button { flex: 1; padding: 6px; border: 0; border-radius: 6px; background: #3d5a80; color: #fff; cursor: pointer; font-size: 12px; }
+    #stkBtns button:disabled { opacity: .35; cursor: not-allowed; }
     #opts label { display: block; margin: 10px 0; font-size: 15px; }
     #hud { position: fixed; left: 16px; bottom: 16px; font-size: 13px; text-shadow: 0 0 4px #000; line-height: 1.5; }
     #stamina { width: 140px; height: 6px; border: 1px solid #e8dc8a; margin-top: 4px; }
@@ -74,6 +98,22 @@
     #cross { position: fixed; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px; background: rgba(232,220,138,.6); border-radius: 50%; }
     #alert { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity .3s; box-shadow: inset 0 0 160px 30px rgba(160,0,0,.75); }
     #caught { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: #000; color: #b00; font-size: 40px; letter-spacing: 6px; z-index: 4; }
+    #examPrompt { position: fixed; inset: 0; z-index: 8; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.78); }
+    .exam-dialog { width: min(440px, calc(100vw - 40px)); padding: 24px; box-sizing: border-box; border: 2px solid #e8dc8a; background: #17170f; color: #eee; text-align: center; }
+    .exam-dialog h2 { margin-top: 0; color: #e8dc8a; }
+    .exam-dialog p { line-height: 1.5; }
+    .exam-dialog button, .exam-paper button { padding: 10px 16px; border: 1px solid #333; background: #d8ca8b; color: #17170f; font: inherit; font-weight: bold; cursor: pointer; }
+    .exam-dialog button + button { margin-left: 8px; background: #333; color: #eee; }
+    #examTest { position: fixed; inset: 0; z-index: 5; display: none; pointer-events: none; }
+    .exam-paper { position: absolute; left: 20px; top: 20px; width: min(460px, calc(100vw - 40px)); height: calc(100vh - 40px); overflow-y: auto; box-sizing: border-box; padding: 24px; background: #f4eddb; color: #222; box-shadow: 0 4px 24px #000; pointer-events: auto; font-family: Georgia, serif; }
+    .exam-paper h2 { margin: 0 0 8px; text-align: center; }
+    .exam-paper .instructions { border-bottom: 1px solid #999; padding-bottom: 12px; font-size: 14px; line-height: 1.45; }
+    #examQuestions { padding-left: 30px; }
+    #examQuestions li { padding: 8px 0; }
+    #examQuestions label { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    #examQuestions input { width: 120px; padding: 6px; border: 1px solid #888; font: inherit; }
+    #examResult { min-height: 1.5em; font-weight: bold; }
+    #examRetry[hidden] { display: none; }
   </style>
   <script type="importmap">
     { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
@@ -101,6 +141,24 @@
   <div id="cursorItem"></div>
   <div id="alert"></div>
   <div id="caught">IT FOUND YOU</div>
+  <div id="examPrompt">
+    <section class="exam-dialog">
+      <h2>Pop Quiz</h2>
+      <p>The teacher is waiting at the front of the room. Do you want to take the math test?</p>
+      <button id="examAccept" type="button">Take the test</button>
+      <button id="examDecline" type="button">Not now</button>
+    </section>
+  </div>
+  <div id="examTest">
+    <form class="exam-paper" id="examForm">
+      <h2>Math Test</h2>
+      <div class="instructions">Work each problem on paper. Answer all eight questions; six correct answers are needed to pass. The calculator on your phone may help, but keep an eye on the teacher's red vision.</div>
+      <ol id="examQuestions"></ol>
+      <p id="examResult" aria-live="polite"></p>
+      <button id="examSubmit" type="submit">Turn in test</button>
+      <button id="examRetry" type="button" hidden>Try again</button>
+    </form>
+  </div>
   <div id="phone">
     <div class="screen on" id="lock">
       <div class="time" id="clockTime"></div>
@@ -114,6 +172,8 @@
         <button class="app" data-app="map"><b>&#128506;</b>Map</button>
         <button class="app" disabled title="Disabled in single player"><b>&#128172;</b>Chat</button>
         <button class="app" data-app="recipes"><b>&#128218;</b>Recipes</button>
+        <button class="app" data-app="treemu"><b>&#128722;</b>Treemu</button>
+        <button class="app" data-app="stocks"><b>&#128200;</b>Stocks</button>
         <button class="app" data-app="opts"><b>&#9881;</b>Options</button>
       </div>
     </div>
@@ -130,11 +190,28 @@
       <header><button class="back">&lsaquo;</button>Recipes</header>
       <div id="recipeList"></div>
     </div>
+    <div class="screen appscreen" id="app-treemu">
+      <header><button class="back">&lsaquo;</button>Treemu</header>
+      <div id="treemuBar"><span>Balance</span><span id="treemuMoney"></span></div>
+      <div id="treemuTabs"><button data-tab="buy" class="on">Buy</button><button data-tab="sell">Sell</button></div>
+      <div id="treemuStatus"></div>
+      <div id="treemuList"></div>
+    </div>
+    <div class="screen appscreen" id="app-stocks">
+      <header><button class="back">&lsaquo;</button>Stocks</header>
+      <div id="treemuBar"><span>Cash</span><span id="stkMoney" style="color:#8fe388;font-weight:700"></span></div>
+      <div id="stkTabs"></div>
+      <div><span id="stkPrice"></span><span id="stkChange"></span></div>
+      <canvas id="stkGraph" width="260" height="120"></canvas>
+      <div id="stkInfo"></div>
+      <div id="stkBtns"><button data-act="b1">Buy 1</button><button data-act="b10">Buy 10</button><button data-act="s1">Sell 1</button><button data-act="sall">Sell all</button></div>
+    </div>
     <div class="screen appscreen" id="app-opts">
       <header><button class="back">&lsaquo;</button>Options</header>
       <div id="opts"><label><input type="checkbox" id="optPos" checked> Show coordinates</label></div>
     </div>
   </div>
+  <div id="deliveryNote"></div>
   <div id="hud">
     <div id="pos"></div>
     <div id="flash"></div>
@@ -146,8 +223,20 @@
     <p>F phone &middot; E inventory &middot; Click to pick up &middot; 1-9 hotbar &middot; WASD / arrows move &middot; Mouse look &middot; Shift sprint &middot; Space jump &middot; C crouch &middot; Esc pause</p>
   </div>
 
+<script src="assets/avatar.js"></script>
 <script type="module">
 import * as THREE from 'three';
+
+const PLAYER_LOOK_KEY = 'cougarNation.playerLook';
+function loadPlayerLook() {
+  try {
+    return CougarAvatar.normalizeLook(JSON.parse(localStorage.getItem(PLAYER_LOOK_KEY) || 'null'));
+  } catch (error) {
+    console.warn('Could not load the saved character look.', error);
+    return CougarAvatar.normalizeLook(null);
+  }
+}
+const playerLook = loadPlayerLook();
 
 /* ---------- Seeded RNG ---------- */
 let seed = 1337;
@@ -194,6 +283,64 @@ for (let i = 0; i < N; i++) { grid[0][i] = grid[N - 1][i] = grid[i][0] = grid[i]
 
 const isWall = (gx, gy) => gx < 0 || gy < 0 || gx >= N || gy >= N || grid[gy][gx] === 1;
 const toGrid = (v) => Math.floor(v / CELL);
+
+/* ---------- Classrooms: walled rooms with a hinged door ---------- */
+const DOOR_H = 2.5;
+const doors = [];           // { gx, gy, side, open, target, pivot }
+const doorAt = new Map();   // gy * N + gx -> door
+const classrooms = [];      // { x0, y0, w, h, side, kind }
+const noMon = new Uint8Array(N * N); // bathroom cells monsters won't path into
+const doorClosed = (gx, gy) => { const d = doorAt.get(gy * N + gx); return !!d && d.open < 0.5; };
+(function placeClassrooms() {
+  let cs = 20260101;
+  const crand = () => (cs = (cs * 1664525 + 1013904223) >>> 0) / 4294967296;
+  const reserved = new Uint8Array(N * N);
+  const SIDES = [{ name: 'S', dx: 0, dy: 1 }, { name: 'N', dx: 0, dy: -1 }, { name: 'E', dx: 1, dy: 0 }, { name: 'W', dx: -1, dy: 0 }];
+  const openCount = () => { let c = 0; for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (!grid[y][x]) c++; return c; };
+  const reachable = () => {
+    const seen = new Uint8Array(N * N), q = [[1, 1]]; seen[N + 1] = 1; let c = 0;
+    while (q.length) {
+      const [x, y] = q.pop(); c++;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= N || ny >= N || grid[ny][nx] || seen[ny * N + nx]) continue;
+        seen[ny * N + nx] = 1; q.push([nx, ny]);
+      }
+    }
+    return c;
+  };
+  for (let tries = 0; tries < 400 && classrooms.length < 10; tries++) {
+    const kind = classrooms.length < 7 ? 'class' : 'bath';
+    const w = kind === 'bath' ? 5 : crand() < 0.5 ? 5 : 7, h = 5;
+    const wide = crand() < 0.5, rw = wide ? w : h, rh = wide ? h : w;
+    const x0 = 2 + Math.floor(crand() * (N - rw - 3)), y0 = 2 + Math.floor(crand() * (N - rh - 3));
+    if (x0 < 9 && y0 < 9) continue;
+    let clash = false;
+    for (let y = y0 - 1; y <= y0 + rh && !clash; y++) for (let x = x0 - 1; x <= x0 + rw; x++) if (reserved[y * N + x]) { clash = true; break; }
+    if (clash) continue;
+    const side = SIDES[Math.floor(crand() * 4)];
+    const snapshot = grid.map((r) => r.slice());
+    for (let y = y0; y < y0 + rh; y++) for (let x = x0; x < x0 + rw; x++)
+      grid[y][x] = (x === x0 || y === y0 || x === x0 + rw - 1 || y === y0 + rh - 1) ? 1 : 0;
+    const dx0 = side.dx ? (side.dx > 0 ? x0 + rw - 1 : x0) : x0 + (rw >> 1);
+    const dy0 = side.dy ? (side.dy > 0 ? y0 + rh - 1 : y0) : y0 + (rh >> 1);
+    grid[dy0][dx0] = 0;
+    // Carve a corridor from the door until it meets the existing maze
+    let cx = dx0 + side.dx, cy = dy0 + side.dy, ok = false;
+    for (let k = 0; k < 8; k++) {
+      if (cx < 1 || cy < 1 || cx > N - 2 || cy > N - 2 || reserved[cy * N + cx]) break;
+      if (!grid[cy][cx]) { ok = true; break; }
+      grid[cy][cx] = 0; cx += side.dx; cy += side.dy;
+    }
+    if (ok && reachable() !== openCount()) ok = false;
+    if (!ok) { for (let y = 0; y < N; y++) grid[y].set(snapshot[y]); continue; }
+    for (let y = y0 - 1; y <= y0 + rh; y++) for (let x = x0 - 1; x <= x0 + rw; x++) reserved[y * N + x] = 1;
+    const door = { gx: dx0, gy: dy0, side: side.name, kind, boarded: kind === 'class', boards: [], open: 0, target: 0, pivot: null };
+    doors.push(door); doorAt.set(dy0 * N + dx0, door);
+    classrooms.push({ x0, y0, w: rw, h: rh, side: side.name, kind, exam: kind === 'class' && !classrooms.some((room) => room.exam), door });
+    if (kind === 'bath') for (let y = y0 + 1; y < y0 + rh - 1; y++) for (let x = x0 + 1; x < x0 + rw - 1; x++) noMon[y * N + x] = 1;
+  }
+})();
 
 /* ---------- Textures (all image files live in assets/textures/) ---------- */
 const TEXTURE_DIR = 'assets/textures/';
@@ -323,10 +470,11 @@ const player = {
 const PHYS = { walk: 3.2, sprint: 5.6, crouch: 1.6, accel: 40, airAccel: 8, friction: 9, gravity: 22, jump: 7.2 };
 
 const keys = {};
+let examPromptOpen = false, examTestActive = false, examWasInside = false, examRoom = null;
 addEventListener('keydown', (e) => {
-  if (e.code === 'KeyE') { if (!e.repeat && (invOpen || document.pointerLockElement === canvas)) toggleInventory(); return; }
-  if (e.code === 'KeyF') { if (!e.repeat && !invOpen && (document.pointerLockElement === canvas || phoneState !== 'closed')) cyclePhone(); return; }
-  if (phoneState === 'full' || invOpen) return;
+  if (e.code === 'KeyE') { if (!e.repeat && !examPromptOpen && !examTestActive && (invOpen || document.pointerLockElement === canvas)) toggleInventory(); return; }
+  if (e.code === 'KeyF') { if (!e.repeat && !invOpen && (document.pointerLockElement === canvas || phoneState !== 'closed' || examTestActive)) cyclePhone(); return; }
+  if (phoneState === 'full' || invOpen || examPromptOpen || examTestActive) return;
   if (/^Digit[1-9]$/.test(e.code)) selectSlot(+e.code.slice(5) - 1);
   keys[e.code] = true;
   if (e.code === 'Space') e.preventDefault();
@@ -336,7 +484,7 @@ addEventListener('keyup', (e) => { keys[e.code] = false; });
 const overlay = document.getElementById('overlay');
 overlay.addEventListener('click', () => canvas.requestPointerLock());
 document.addEventListener('pointerlockchange', () => {
-  overlay.style.display = document.pointerLockElement === canvas || phoneState !== 'closed' || invOpen ? 'none' : 'flex';
+  overlay.style.display = document.pointerLockElement === canvas || phoneState !== 'closed' || invOpen || examPromptOpen || examTestActive ? 'none' : 'flex';
 });
 
 /* ---------- Phone ---------- */
@@ -363,7 +511,7 @@ function cyclePhone() {
 }
 // Clicking outside the phone returns to the game (Esc leaves the mouse unlocked)
 document.addEventListener('click', (e) => {
-  if (phoneState === 'closed' || invOpen || phone.contains(e.target) || document.pointerLockElement === canvas) return;
+  if (examPromptOpen || (examTestActive && examForm.contains(e.target)) || phoneState === 'closed' || invOpen || phone.contains(e.target) || document.pointerLockElement === canvas) return;
   if (phoneState === 'full') { phoneState = 'mini'; phone.classList.add('mini'); }
   canvas.requestPointerLock();
 });
@@ -415,35 +563,51 @@ addEventListener('mousemove', (e) => {
 });
 
 // Circle-vs-grid collision, resolved per axis so the player slides along walls
+function pushOut(p, r, vel, minX, maxX, minZ, maxZ) {
+  const cx = Math.max(minX, Math.min(p.x, maxX)), cz = Math.max(minZ, Math.min(p.z, maxZ));
+  let dx = p.x - cx, dz = p.z - cz;
+  const d2 = dx * dx + dz * dz;
+  if (d2 >= r * r) return;
+  if (d2 > 1e-9) {
+    const d = Math.sqrt(d2), push = r - d;
+    dx /= d; dz /= d;
+    p.x += dx * push; p.z += dz * push;
+    const vn = vel.x * dx + vel.z * dz;
+    if (vn < 0) { vel.x -= vn * dx; vel.z -= vn * dz; }
+  } else { // centre inside a wall: eject along the shallowest axis
+    const l = p.x - minX, rr = maxX - p.x, t = p.z - minZ, b = maxZ - p.z;
+    const m = Math.min(l, rr, t, b);
+    if (m === l) p.x = minX - r; else if (m === rr) p.x = maxX + r;
+    else if (m === t) p.z = minZ - r; else p.z = maxZ + r;
+  }
+}
+const colliders = []; // extra axis-aligned boxes (desks): { minX, maxX, minZ, maxZ }
+// Circle-vs-grid collision, resolved per axis so the player slides along walls
 function collide(p, r = player.radius, vel = player.vel) {
   for (let pass = 0; pass < 2; pass++) {
     const gx0 = toGrid(p.x - r - 0.01), gx1 = toGrid(p.x + r + 0.01);
     const gz0 = toGrid(p.z - r - 0.01), gz1 = toGrid(p.z + r + 0.01);
     for (let gz = gz0; gz <= gz1; gz++) for (let gx = gx0; gx <= gx1; gx++) {
-      if (!isWall(gx, gz)) continue;
-      const minX = gx * CELL, maxX = minX + CELL, minZ = gz * CELL, maxZ = minZ + CELL;
-      const cx = Math.max(minX, Math.min(p.x, maxX)), cz = Math.max(minZ, Math.min(p.z, maxZ));
-      let dx = p.x - cx, dz = p.z - cz;
-      const d2 = dx * dx + dz * dz;
-      if (d2 >= r * r) continue;
-      if (d2 > 1e-9) {
-        const d = Math.sqrt(d2), push = r - d;
-        dx /= d; dz /= d;
-        p.x += dx * push; p.z += dz * push;
-        const vn = vel.x * dx + vel.z * dz;
-        if (vn < 0) { vel.x -= vn * dx; vel.z -= vn * dz; }
-      } else { // centre inside a wall: eject along the shallowest axis
-        const l = p.x - minX, rr = maxX - p.x, t = p.z - minZ, b = maxZ - p.z;
-        const m = Math.min(l, rr, t, b);
-        if (m === l) p.x = minX - r; else if (m === rr) p.x = maxX + r;
-        else if (m === t) p.z = minZ - r; else p.z = maxZ + r;
-      }
+      if (!isWall(gx, gz) && !doorClosed(gx, gz)) continue;
+      pushOut(p, r, vel, gx * CELL, gx * CELL + CELL, gz * CELL, gz * CELL + CELL);
     }
+    for (const c of colliders) if (!c.door || c.door.open < 0.5) pushOut(p, r, vel, c.minX, c.maxX, c.minZ, c.maxZ);
   }
 }
 
 let caught = false;
 function update(dt) {
+  if (examPromptOpen || examTestActive) {
+    player.vel.set(0, 0, 0);
+    if (examTestActive && examRoom) {
+      const seat = examRoom.group.localToWorld(new THREE.Vector3(0, 0, examRoom.seatZ));
+      player.pos.set(seat.x, 0, seat.z);
+    }
+    const eyeH = player.eye - player.crouch * 0.6;
+    camera.position.set(player.pos.x, player.pos.y + eyeH, player.pos.z);
+    camera.rotation.set(player.pitch, player.yaw, 0, 'YXZ');
+    return;
+  }
   const locked = document.pointerLockElement === canvas && !caught;
   const f = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0);
   const s = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0);
@@ -543,7 +707,7 @@ function bfs(sx, sy, tx, ty) {
     if (cx === tx && cy === ty) break;
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
       const nx = cx + dx, ny = cy + dy, n = ny * N + nx;
-      if (isWall(nx, ny) || prev[n] !== -1) continue;
+      if (isWall(nx, ny) || noMon[n] || prev[n] !== -1) continue;
       prev[n] = c; q.push(n);
     }
   }
@@ -560,7 +724,7 @@ function bfsDistances(sx, sy) {
     const c = q[i], cx = c % N, cy = (c / N) | 0;
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
       const nx = cx + dx, ny = cy + dy, n = ny * N + nx;
-      if (isWall(nx, ny) || dist[n] !== -1) continue;
+      if (isWall(nx, ny) || noMon[n] || dist[n] !== -1) continue;
       dist[n] = dist[c] + 1; q.push(n);
     }
   }
@@ -572,7 +736,8 @@ function hasLineOfSight(ax, az, bx, bz) {
   const d = Math.hypot(bx - ax, bz - az), n = Math.ceil(d / 0.25);
   for (let i = 1; i < n; i++) {
     const k = i / n;
-    if (isWall(toGrid(ax + (bx - ax) * k), toGrid(az + (bz - az) * k))) return false;
+    const gx = toGrid(ax + (bx - ax) * k), gz = toGrid(az + (bz - az) * k);
+    if (isWall(gx, gz) || doorClosed(gx, gz)) return false;
   }
   return true;
 }
@@ -608,6 +773,7 @@ function randomOpenCell() {
 }
 
 function monsterSees(m) {
+  if (player.hidden) return false;
   const dx = player.pos.x - m.pos.x, dz = player.pos.z - m.pos.z, d = Math.hypot(dx, dz);
   const range = m.cfg.sight * (player.crouch > 0.5 ? 0.6 : 1);
   if (d > range) return false;
@@ -671,18 +837,22 @@ function updateMonsters(dt) {
       m.facing += diff * Math.min(1, dt * 7);
     }
 
-    if (exposed && Math.hypot(player.pos.x - m.pos.x, player.pos.z - m.pos.z) < 0.9) return caughtByMonster();
+    if (exposed && !player.hidden && Math.hypot(player.pos.x - m.pos.x, player.pos.z - m.pos.z) < 0.9) return caughtByMonster();
   }
 }
 
 function caughtByMonster() {
   caught = true; keys.Space = false;
+  examPromptOpen = false; examTestActive = false; examWasInside = false;
+  examPromptEl.style.display = 'none'; examTestEl.style.display = 'none';
+  player.crouch = 0;
   caughtEl.style.display = 'flex';
   setTimeout(() => {
     player.pos.set(1.5 * CELL, 0, 1.5 * CELL); player.vel.set(0, 0, 0); player.yaw = 0; player.pitch = 0;
     spawnMonsters();
     caughtEl.style.display = 'none';
     caught = false;
+    overlay.style.display = document.pointerLockElement === canvas || phoneState !== 'closed' || invOpen ? 'none' : 'flex';
   }, 2500);
 }
 
@@ -756,6 +926,7 @@ const ITEMS = {
   plastic: { name: 'Plastic', icon: '\u267B\uFE0F', max: 64 },
   fabric: { name: 'Fabric', icon: '\u{1F9F5}', max: 64 },
   hallpass: { name: 'Hall Pass', icon: '\u{1F3AB}', max: 1 },
+  teacherid: { name: 'Teacher ID Pass', icon: '\u{1FAAA}', max: 1 },
 };
 // Shapeless: every grid item must belong to a need, and each need must be met
 const RECIPES = [
@@ -817,16 +988,18 @@ function takeCraftOutput() {
   if (cursor) cursor.n += r.n; else cursor = { id: r.out, n: r.n };
   renderInv();
 }
+var shopReady = false;
 const slots = Array(GRID0 + 9).fill(null); // 0-8 hotbar, 9-35 main, 36+ crafting grid (3x3)
 slots[0] = { id: 'phone', n: 1 };
 let cursor = null, selected = 0, invOpen = false;
 
-function addItem(id, n) {
+function addItem(id, n) { return addItemRemainder(id, n) === 0; }
+function addItemRemainder(id, n) {
   const max = ITEMS[id].max;
   for (let i = 0; i < GRID0 && n > 0; i++) { const s = slots[i]; if (s && s.id === id && s.n < max) { const a = Math.min(n, max - s.n); s.n += a; n -= a; } }
   for (let i = 0; i < GRID0 && n > 0; i++) if (!slots[i]) { const a = Math.min(n, max); slots[i] = { id, n: a }; n -= a; }
   renderInv();
-  return n === 0;
+  return n;
 }
 
 const hotbarEl = document.getElementById('hotbar'), invMainEl = document.getElementById('invMain'), invHotEl = document.getElementById('invHot');
@@ -870,6 +1043,7 @@ function renderInv() {
   hotSlots.forEach((el, i) => el.classList.toggle('sel', i === selected));
   invSlots.forEach((el, i) => el.classList.toggle('sel', i === selected));
   updateHeld();
+  if (shopReady) refreshShop();
   fillSlot(cursorEl, cursor); cursorEl.title = '';
   cursorEl.style.display = invOpen && cursor ? 'block' : 'none';
 }
@@ -973,6 +1147,11 @@ const PROP_BUILDERS = {
     bx(0.2, 0.12, 0.005, 0, 0.06, 0, bodyMat(0xf2e8c0), g);
     bx(0.2, 0.025, 0.006, 0, 0.1, 0, bodyMat(0xc02020), g);
   },
+  teacherid(g) {
+    bx(0.18, 0.24, 0.025, 0, 0.12, 0, bodyMat(0xd7d2b8), g);
+    bx(0.14, 0.045, 0.01, 0, 0.19, 0.018, bodyMat(0x9b2020), g);
+    bx(0.06, 0.07, 0.012, 0, 0.08, 0.018, bodyMat(0x5b8da8), g);
+  },
   ingot(g) {
     const m = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.06, 0.06, 4), new THREE.MeshPhongMaterial({ color: 0xb8bcc4, shininess: 80 }));
     m.rotation.y = Math.PI / 4;
@@ -987,6 +1166,12 @@ const PROP_BUILDERS = {
   },
 };
 
+PROP_BUILDERS.package = (g) => {
+  const cardboard = bodyMat(0xb08a56);
+  bx(0.45, 0.3, 0.35, 0, 0.15, 0, cardboard, g);
+  bx(0.46, 0.012, 0.06, 0, 0.3, 0, bodyMat(0xd9c9a0), g);
+  bx(0.06, 0.012, 0.36, 0, 0.3, 0, bodyMat(0xd9c9a0), g);
+};
 const heldModels = {};
 const heldRoot = new THREE.Group();
 camera.add(heldRoot);
@@ -1020,6 +1205,431 @@ function updateHeld() {
   if (selectedItem && PROP_BUILDERS[selectedItem.id]) heldModel(selectedItem.id).visible = true;
 }
 
+/* ---------- Classroom meshes, doors and interaction ---------- */
+const doorMat = new THREE.MeshPhongMaterial({ color: 0x7a4a22, specular: 0x222222 });
+const doorMeshes = [];
+const boardTex = (() => {
+  const c = makeCanvas(512, 256), g = c.getContext('2d');
+  g.fillStyle = '#1f3a2b'; g.fillRect(0, 0, 512, 256);
+  g.strokeStyle = 'rgba(255,255,255,0.12)'; g.lineWidth = 10; g.strokeRect(0, 0, 512, 256);
+  g.fillStyle = 'rgba(255,255,255,0.75)'; g.font = '34px "Comic Sans MS", cursive';
+  g.fillText('Go Cougars!', 40, 80); g.font = '26px "Comic Sans MS", cursive';
+  g.fillText('2 + 2 = 4', 60, 140); g.fillText('Do not run in the halls', 40, 200);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+})();
+const boardMat = new THREE.MeshPhongMaterial({ map: boardTex, specular: 0x000000 });
+const deskMat = new THREE.MeshPhongMaterial({ color: 0xb08a55, specular: 0x111111 });
+const SIDE_ROT = { S: 0, E: Math.PI / 2, N: Math.PI, W: -Math.PI / 2 };
+const HINGE = { // hinge offset from cell corner (in cells), panel axis, swing angle
+  S: { hx: 0, hz: 0.5, axis: 'x', a: Math.PI / 2 }, N: { hx: 0, hz: 0.5, axis: 'x', a: -Math.PI / 2 },
+  E: { hx: 0.5, hz: 0, axis: 'z', a: -Math.PI / 2 }, W: { hx: 0.5, hz: 0, axis: 'z', a: Math.PI / 2 },
+};
+const DW = 1.1; // doorway width
+const stallDoors = [];
+function worldBox(group, u0, v0, u1, v1) {
+  group.updateMatrixWorld(true);
+  const a = group.localToWorld(new THREE.Vector3(u0, 0, v0)), b = group.localToWorld(new THREE.Vector3(u1, 0, v1));
+  return { minX: Math.min(a.x, b.x), maxX: Math.max(a.x, b.x), minZ: Math.min(a.z, b.z), maxZ: Math.max(a.z, b.z) };
+}
+function addCollider(group, u, v, w, d, door) {
+  const c = worldBox(group, u - w / 2, v - d / 2, u + w / 2, v + d / 2);
+  if (door) c.door = door;
+  colliders.push(c); return c;
+}
+function buildDesk(g, u, v, w, d, h) {
+  bx(w, 0.05, d, u, h, v, deskMat, g);
+  bx(0.05, h, d * 0.9, u - w / 2 + 0.05, h / 2, v, metalMat, g);
+  bx(0.05, h, d * 0.9, u + w / 2 - 0.05, h / 2, v, metalMat, g);
+  addCollider(g, u, v, w, d);
+}
+const tileMat = new THREE.MeshPhongMaterial({ color: 0x9db9bd, specular: 0x333333 });
+const stallMat = new THREE.MeshPhongMaterial({ color: 0x3f6f78, specular: 0x222222 });
+const porcelain = new THREE.MeshPhongMaterial({ color: 0xe8ecee, shininess: 70 });
+// Live 3D mirror: the player's avatar is rendered to a texture from the mirror's point of view
+const mirrorRT = new THREE.WebGLRenderTarget(256, 384);
+mirrorRT.texture.colorSpace = THREE.SRGBColorSpace;
+const mirrorMat = new THREE.MeshBasicMaterial({ map: mirrorRT.texture });
+const mirrorScene = new THREE.Scene();
+mirrorScene.background = new THREE.Color(0xaab4b0);
+{
+  const wall = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), new THREE.MeshBasicMaterial({ color: 0x9db9bd }));
+  wall.position.z = -1.5; mirrorScene.add(wall);
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(8, 8), new THREE.MeshLambertMaterial({ color: 0x6f8a8e }));
+  floor.rotation.x = -Math.PI / 2; mirrorScene.add(floor);
+  mirrorScene.add(new THREE.HemisphereLight(0xffffff, 0x666670, 1.5));
+  const key = new THREE.DirectionalLight(0xfff4dd, 2); key.position.set(1.5, 4, 3); mirrorScene.add(key);
+}
+const mirrorCam = new THREE.PerspectiveCamera(32, 256 / 384, 0.1, 30);
+mirrorCam.position.set(0, 1.0, 4.4); mirrorCam.lookAt(0, 0.95, 0);
+const mirrorAvatar = CougarAvatar.build(THREE, playerLook);
+mirrorScene.add(mirrorAvatar);
+const mirrorSpots = [];
+const mirrorFrameMat = new THREE.MeshPhongMaterial({ color: 0x6b5438, specular: 0x333333 });
+function addBathroomMirror(group, U, V) {
+  const width = 1.25, height = 1.55, u = U / 2 - 0.075, v = -V / 2 + 3.7;
+  const mirror = new THREE.Mesh(new THREE.PlaneGeometry(width, height), mirrorMat);
+  mirror.rotation.y = -Math.PI / 2;
+  mirror.position.set(u, 1.8, v);
+  group.add(mirror);
+  mirrorSpots.push(mirror);
+  const frame = new THREE.Group();
+  const x = u - 0.025;
+  bx(0.09, height + 0.16, 0.1, x, 1.8, v, mirrorFrameMat, frame);
+  bx(0.11, 0.08, width + 0.16, x, 1.8 + height / 2 + 0.04, v, mirrorFrameMat, frame);
+  bx(0.11, 0.08, width + 0.16, x, 1.8 - height / 2 - 0.04, v, mirrorFrameMat, frame);
+  group.add(frame);
+}
+function makeStallDoor(g, u, v, w) {
+  const pivot = new THREE.Group(); pivot.position.set(u - w / 2 + 0.03, 0, v);
+  const len = w - 0.06, panel = new THREE.Group();
+  bx(len, 1.9, 0.04, len / 2, 1.05, 0, stallMat, panel);
+  bx(0.1, 0.05, 0.06, len - 0.1, 1.0, 0, metalMat, panel);
+  pivot.add(panel); g.add(pivot);
+  const d = { open: 0, target: 0, pivot, swing: -Math.PI / 2, stall: true };
+  addCollider(g, u, v, w, 0.12, d);
+  panel.traverse((o) => { if (o.isMesh) { o.userData.door = d; doorMeshes.push(o); } });
+  stallDoors.push(d); return d;
+}
+function buildBathroom(g, U, V) {
+  const floorTile = new THREE.Mesh(new THREE.PlaneGeometry(U, V), tileMat);
+  floorTile.rotation.x = -Math.PI / 2; floorTile.position.y = 0.012; g.add(floorTile);
+  const SW = 1.1, SD = 1.9, n = Math.min(6, Math.floor((U - 1.6) / SW));
+  const vb = -V / 2, vf = vb + SD;
+  for (let k = 0; k <= n; k++) {
+    const u = (k - n / 2) * SW;
+    bx(0.05, 1.9, SD, u, 1.05, vb + SD / 2, stallMat, g);
+    addCollider(g, u, vb + SD / 2, 0.06, SD);
+  }
+  for (let k = 0; k < n; k++) {
+    const u = (k - (n - 1) / 2) * SW;
+    bx(0.4, 0.4, 0.5, u, 0.2, vb + 0.35, porcelain, g);
+    bx(0.42, 0.45, 0.14, u, 0.55, vb + 0.12, porcelain, g);
+    addCollider(g, u, vb + 0.35, 0.42, 0.5);
+    const d = makeStallDoor(g, u, vf, SW);
+    d.stallBox = worldBox(g, u - SW / 2 + 0.05, vb, u + SW / 2 - 0.05, vf - 0.05);
+  }
+  // sinks along the side wall opposite the stalls' open end
+  for (let k = 0; k < 2; k++) {
+    const u = U / 2 - 0.3, v = vf + 1.2 + k * 1.2;
+    bx(0.5, 0.15, 0.55, u, 0.85, v, porcelain, g);
+    bx(0.12, 0.8, 0.12, u + 0.1, 0.4, v, porcelain, g);
+    addCollider(g, u, v, 0.5, 0.55);
+  }
+  addBathroomMirror(g, U, V);
+}
+for (const room of classrooms) {
+  const iw = room.w - 2, ih = room.h - 2; // interior cells
+  const cx = (room.x0 + room.w / 2) * CELL, cz = (room.y0 + room.h / 2) * CELL;
+  const g = new THREE.Group(); g.position.set(cx, 0, cz); g.rotation.y = SIDE_ROT[room.side]; scene.add(g);
+  g.updateMatrixWorld(true);
+  const turned = room.side === 'E' || room.side === 'W';
+  const U = (turned ? ih : iw) * CELL, V = (turned ? iw : ih) * CELL; // local width / depth
+  if (room.kind === 'bath') { buildBathroom(g, U, V); continue; }
+  const board = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(5.5, U - 1), 1.3), boardMat);
+  board.position.set(0, 1.5, -V / 2 + 0.02); g.add(board);
+  bx(Math.min(5.5, U - 1) + 0.2, 0.08, 0.06, 0, 0.84, -V / 2 + 0.04, deskMat, g);
+  buildDesk(g, U / 2 - 1.6, -V / 2 + 1.0, 1.5, 0.7, 0.75); // teacher desk
+  const cols = Math.max(1, Math.floor((U - 1.6) / 1.5));
+  for (let r = 0; r < Math.max(1, Math.floor((V - 3.6) / 1.5)); r++) for (let c = 0; c < cols; c++) {
+    const u = (c - (cols - 1) / 2) * 1.5;
+    if (Math.abs(u) < 0.6) continue; // centre aisle for the door
+    buildDesk(g, u, -V / 2 + 2.4 + r * 1.5, 0.9, 0.55, 0.72);
+  }
+  room.group = g;
+  if (room.exam) {
+    const teacherZ = -V / 2 + 0.9;
+    const teacher = new THREE.Group();
+    const suitMat = bodyMat(0x17191d), skinMat = bodyMat(0x77716c), eyeMat = new THREE.MeshBasicMaterial({ color: 0xff1010 });
+    bx(0.58, 0.95, 0.34, 0, 1.0, 0, suitMat, teacher);
+    bx(0.12, 0.55, 0.14, -0.17, 0.36, 0, suitMat, teacher);
+    bx(0.12, 0.55, 0.14, 0.17, 0.36, 0, suitMat, teacher);
+    bx(0.11, 0.65, 0.14, -0.38, 0.93, 0, suitMat, teacher);
+    bx(0.11, 0.65, 0.14, 0.38, 0.93, 0, suitMat, teacher);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 10), skinMat);
+    head.position.set(0, 1.68, 0.04); teacher.add(head);
+    for (const x of [-0.08, 0.08]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), eyeMat);
+      eye.position.set(x, 1.7, 0.25); teacher.add(eye);
+    }
+    teacher.position.set(0, 0, teacherZ);
+    g.add(teacher);
+
+    const scanRange = V + 1;
+    const vision = new THREE.Group();
+    vision.position.set(0, 1.55, teacherZ + 0.3);
+    const cone = new THREE.Mesh(
+      new THREE.ConeGeometry(Math.tan(0.25) * scanRange, scanRange, 32, 1, true),
+      new THREE.MeshBasicMaterial({ color: 0xff1010, transparent: true, opacity: 0.2, depthWrite: false, side: THREE.DoubleSide }),
+    );
+    cone.rotation.x = -Math.PI / 2;
+    cone.position.z = scanRange / 2;
+    vision.add(cone);
+    g.add(vision);
+
+    const seatZ = V / 2 - 1.5;
+    buildDesk(g, 0, seatZ - 0.75, 1.05, 0.65, 0.72);
+    bx(0.48, 0.12, 0.48, 0, 0.48, seatZ, deskMat, g);
+    bx(0.06, 0.48, 0.06, -0.18, 0.24, seatZ + 0.18, metalMat, g);
+    bx(0.06, 0.48, 0.06, 0.18, 0.24, seatZ + 0.18, metalMat, g);
+    examRoom = { room, group: g, U, V, seatZ, teacherZ, scanRange, vision };
+  }
+}
+
+const examPromptEl = document.getElementById('examPrompt');
+const examTestEl = document.getElementById('examTest');
+const examForm = document.getElementById('examForm');
+const examQuestionsEl = document.getElementById('examQuestions');
+const examResultEl = document.getElementById('examResult');
+const examSubmit = document.getElementById('examSubmit');
+const examRetry = document.getElementById('examRetry');
+const examContinue = document.createElement('button');
+examContinue.type = 'button';
+examContinue.textContent = 'Continue';
+examContinue.hidden = true;
+examForm.appendChild(examContinue);
+
+function makeExamQuestions() {
+  const integer = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
+  const questions = [];
+  for (let i = 0; i < 2; i++) {
+    const divisor = integer(17, 49), quotient = integer(23, 87);
+    questions.push({ prompt: `Long division: ${divisor * quotient} \u00f7 ${divisor} =`, answer: quotient });
+  }
+  for (let i = 0; i < 2; i++) {
+    const a = integer(124, 987), b = integer(24, 96);
+    questions.push({ prompt: `Multiplication: ${a} \u00d7 ${b} =`, answer: a * b });
+  }
+  for (let i = 0; i < 2; i++) {
+    const a = integer(12000, 98765), b = integer(3210, 11999);
+    questions.push({ prompt: `Subtraction: ${a} \u2212 ${b} =`, answer: a - b });
+  }
+  for (let i = 0; i < 2; i++) {
+    const a = integer(4872, 98765), b = integer(2681, 87654);
+    questions.push({ prompt: `Addition: ${a} + ${b} =`, answer: a + b });
+  }
+  return questions;
+}
+
+let currentExamQuestions = [];
+function renderExamQuestions() {
+  currentExamQuestions = makeExamQuestions();
+  examQuestionsEl.replaceChildren();
+  currentExamQuestions.forEach((question, index) => {
+    const li = document.createElement('li');
+    const label = document.createElement('label');
+    const text = document.createElement('span');
+    text.textContent = question.prompt;
+    const input = document.createElement('input');
+    input.type = 'number'; input.step = '1'; input.required = true; input.name = `answer-${index}`;
+    input.setAttribute('aria-label', `Answer to question ${index + 1}`);
+    label.append(text, input); li.appendChild(label); examQuestionsEl.appendChild(li);
+  });
+}
+
+function beginExam() {
+  examPromptOpen = false;
+  examPromptEl.style.display = 'none';
+  examTestActive = true;
+  examWasInside = true;
+  for (const key in keys) keys[key] = false;
+  const seat = examRoom.group.localToWorld(new THREE.Vector3(0, 0, examRoom.seatZ));
+  player.pos.set(seat.x, 0, seat.z);
+  player.vel.set(0, 0, 0);
+  player.crouch = 0.75;
+  player.yaw = SIDE_ROT[examRoom.room.side];
+  player.pitch = 0;
+  renderExamQuestions();
+  examResultEl.textContent = '';
+  examQuestionsEl.style.display = '';
+  examSubmit.hidden = false;
+  examSubmit.textContent = 'Turn in test';
+  examRetry.hidden = true;
+  examContinue.hidden = true;
+  examTestEl.style.display = 'block';
+  document.exitPointerLock();
+}
+
+function declineExam() {
+  examPromptOpen = false;
+  examPromptEl.style.display = 'none';
+  examWasInside = false;
+  for (const key in keys) keys[key] = false;
+  player.vel.set(0, 0, 0);
+  const outsideDoor = examRoom.group.localToWorld(new THREE.Vector3(0, 0, examRoom.V / 2 + CELL * 0.5 + 0.7));
+  player.pos.set(outsideDoor.x, 0, outsideDoor.z);
+  canvas.requestPointerLock();
+}
+
+function giveTeacherIdPass() {
+  if (slots.slice(0, GRID0).some((slot) => slot?.id === 'teacherid')) return true;
+  if (addItem('teacherid', 1)) return true;
+  const drop = new THREE.Group();
+  PROP_BUILDERS.teacherid(drop);
+  const hit = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.5, 0.6), new THREE.MeshBasicMaterial());
+  hit.visible = false; hit.position.y = 0.25; drop.add(hit);
+  const position = examRoom.group.localToWorld(new THREE.Vector3(0.8, 0, examRoom.seatZ));
+  drop.position.set(position.x, 0, position.z);
+  drop.userData = { id: 'teacherid', n: 1 };
+  scene.add(drop); props.push(drop);
+  return false;
+}
+
+function finishExam() {
+  examTestActive = false;
+  examTestEl.style.display = 'none';
+  player.crouch = 0;
+  if (phoneState === 'closed') canvas.requestPointerLock();
+}
+
+function caughtByTeacher() {
+  examPromptOpen = false;
+  examTestActive = false;
+  examPromptEl.style.display = 'none';
+  examTestEl.style.display = 'none';
+  if (phoneState !== 'closed') {
+    phoneState = 'closed';
+    phone.classList.remove('open', 'mini');
+    showScreen('lock');
+  }
+  caughtByMonster();
+}
+
+document.getElementById('examAccept').addEventListener('click', beginExam);
+document.getElementById('examDecline').addEventListener('click', declineExam);
+examForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  if (!examTestActive) return;
+  const answers = new FormData(examForm);
+  const score = currentExamQuestions.reduce((total, question, index) => {
+    const answer = answers.get(`answer-${index}`);
+    return total + (answer !== null && answer !== '' && Number(answer) === question.answer ? 1 : 0);
+  }, 0);
+  if (score >= 6) {
+    const inInventory = giveTeacherIdPass();
+    examTestActive = false;
+    examRoom.room.examPassed = true;
+    examQuestionsEl.style.display = 'none';
+    examSubmit.hidden = true;
+    examRetry.hidden = true;
+    examContinue.hidden = false;
+    examResultEl.textContent = inInventory
+      ? `Passed: ${score}/8. Teacher ID Pass added to your inventory.`
+      : `Passed: ${score}/8. Your inventory was full, so the Teacher ID Pass is on the floor by your seat.`;
+  } else {
+    examResultEl.textContent = `${score}/8 correct. You need 6 to pass. Check your work and try again.`;
+    examRetry.hidden = false;
+  }
+});
+examRetry.addEventListener('click', () => {
+  if (!examTestActive) return;
+  renderExamQuestions();
+  examResultEl.textContent = '';
+  examRetry.hidden = true;
+});
+examContinue.addEventListener('click', finishExam);
+
+function updateExam(time) {
+  if (!examRoom) return;
+  examRoom.vision.rotation.y = Math.sin(time * 0.22) * 0.85;
+  if (caught) return;
+  const localPlayer = examRoom.group.worldToLocal(new THREE.Vector3(player.pos.x, 0, player.pos.z));
+  const inside = Math.abs(localPlayer.x) < examRoom.U / 2 + CELL * 0.5 &&
+    Math.abs(localPlayer.z) < examRoom.V / 2 + CELL * 0.5;
+  if (!inside) examWasInside = false;
+  else if (!examWasInside && !examRoom.room.examPassed) {
+    examWasInside = true;
+    examPromptOpen = true;
+    examPromptEl.style.display = 'flex';
+    document.exitPointerLock();
+  }
+  if (!inside || phoneState === 'closed') return;
+  const dx = localPlayer.x, dz = localPlayer.z - (examRoom.teacherZ + 0.3);
+  const distance = Math.hypot(dx, dz);
+  let angle = Math.atan2(dx, dz) - examRoom.vision.rotation.y;
+  angle = Math.atan2(Math.sin(angle), Math.cos(angle));
+  if (distance <= examRoom.scanRange && Math.abs(angle) <= 0.25 && hasLineOfSight(player.pos.x, player.pos.z, examRoom.group.localToWorld(new THREE.Vector3(0, 0, examRoom.teacherZ)).x, examRoom.group.localToWorld(new THREE.Vector3(0, 0, examRoom.teacherZ)).z))
+    caughtByTeacher();
+}
+
+for (const d of doors) {
+  const hg = HINGE[d.side], ctr = new THREE.Vector3((d.gx + 0.5) * CELL, 0, (d.gy + 0.5) * CELL);
+  const pivot = new THREE.Group();
+  const jw = (CELL - DW) / 2;
+  if (hg.axis === 'x') pivot.position.set(ctr.x - DW / 2, 0, ctr.z); else pivot.position.set(ctr.x, 0, ctr.z - DW / 2);
+  const len = DW - 0.04, panel = new THREE.Group();
+  if (hg.axis === 'x') bx(len, DOOR_H, 0.08, len / 2 + 0.02, DOOR_H / 2, 0, doorMat, panel);
+  else bx(0.08, DOOR_H, len, 0, DOOR_H / 2, len / 2 + 0.02, doorMat, panel);
+  const knobAt = hg.axis === 'x' ? [len - 0.15, 1.0, 0.09] : [0.09, 1.0, len - 0.15];
+  const knob = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), new THREE.MeshPhongMaterial({ color: 0xd4b24a, shininess: 80 }));
+  knob.position.set(...knobAt); panel.add(knob);
+  const knob2 = knob.clone(); knob2.position[hg.axis === 'x' ? 'z' : 'x'] *= -1; panel.add(knob2);
+  pivot.add(panel); scene.add(pivot);
+  for (const sgn of [-1, 1]) { // fixed wall segments either side of the doorway
+    const off = sgn * (DW / 2 + jw / 2);
+    const jx = hg.axis === 'x' ? ctr.x + off : ctr.x, jz = hg.axis === 'x' ? ctr.z : ctr.z + off;
+    const jmesh = new THREE.Mesh(new THREE.BoxGeometry(hg.axis === 'x' ? jw : CELL, WALL_H, hg.axis === 'x' ? CELL : jw), walls.material);
+    jmesh.position.set(jx, WALL_H / 2, jz); scene.add(jmesh);
+    const hw = (hg.axis === 'x' ? jw : CELL) / 2, hd = (hg.axis === 'x' ? CELL : jw) / 2;
+    colliders.push({ minX: jx - hw, maxX: jx + hw, minZ: jz - hd, maxZ: jz + hd });
+  }
+  const lintel = new THREE.Mesh(new THREE.BoxGeometry(CELL, WALL_H - DOOR_H, CELL), walls.material);
+  lintel.position.set(ctr.x, DOOR_H + (WALL_H - DOOR_H) / 2, ctr.z); scene.add(lintel);
+  d.pivot = pivot; d.swing = hg.a; d.center = ctr;
+  if (d.boarded) for (const y of [0.55, 1.25, 1.95]) {
+    const row = [];
+    for (const face of [-1, 1]) {
+      const board = hg.axis === 'x'
+        ? bx(len + 0.14, 0.14, 0.05, len / 2 + 0.02, y, face * 0.07, woodMat, panel)
+        : bx(0.05, 0.14, len + 0.14, face * 0.07, y, len / 2 + 0.02, woodMat, panel);
+      board.userData.door = d;
+      row.push(board);
+    }
+    d.boards.push(row);
+  }
+  panel.traverse((o) => { if (o.isMesh) { o.userData.door = d; doorMeshes.push(o); } });
+}
+function updateDoors(dt) {
+  for (const d of doors.concat(stallDoors)) {
+    if (d.open !== d.target) d.open = d.target > d.open ? Math.min(d.target, d.open + dt * 2.2) : Math.max(d.target, d.open - dt * 2.2);
+    const e = d.open * d.open * (3 - 2 * d.open);
+    d.pivot.rotation.y = d.swing * e;
+    if (d.center && !d.boarded && d.kind !== 'bath')
+      for (const m of monsters) if (Math.hypot(m.pos.x - d.center.x, m.pos.z - d.center.z) < 2.4) d.target = 1; // monsters shove doors open
+  }
+  const px = player.pos.x, pz = player.pos.z;
+  player.hidden = stallDoors.some((d) => d.open < 0.5 && px > d.stallBox.minX && px < d.stallBox.maxX && pz > d.stallBox.minZ && pz < d.stallBox.maxZ);
+}
+function targetDoor() {
+  camera.updateMatrixWorld();
+  raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+  const hit = raycaster.intersectObjects(doorMeshes, false)[0];
+  if (!hit) return null;
+  const wall = raycaster.intersectObject(walls)[0];
+  return wall && wall.distance < hit.distance ? null : { door: hit.object.userData.door, distance: hit.distance };
+}
+function toggleDoor(d) {
+  if (d.stall) { d.target = d.target ? 0 : 1; return; }
+  if (d.boarded) {
+    if (slots[selected]?.id !== 'axe') return;
+    const boards = d.boards.pop();
+    if (boards) for (const board of boards) {
+      board.parent.remove(board);
+      const index = doorMeshes.indexOf(board);
+      if (index !== -1) doorMeshes.splice(index, 1);
+    }
+    d.boarded = d.boards.length > 0;
+    return;
+  }
+  if (!d.target && d.kind === 'bath' && slots[selected]?.id !== 'hallpass') return;
+  if (d.target === 1) { // don't slam it shut on someone standing in the doorway
+    const pad = player.radius + 0.1;
+    const x0 = d.gx * CELL - pad, x1 = (d.gx + 1) * CELL + pad, z0 = d.gy * CELL - pad, z1 = (d.gy + 1) * CELL + pad;
+    if (player.pos.x > x0 && player.pos.x < x1 && player.pos.z > z0 && player.pos.z < z1) return;
+    if (monsters.some((m) => m.pos.x > x0 && m.pos.x < x1 && m.pos.z > z0 && m.pos.z < z1)) return;
+    d.target = 0;
+  } else d.target = 1;
+}
+
 const PROP_COUNTS = { stool: 12, plank: 20, nails: 16, duck: 8, bin: 8, bottle: 14, backpack: 6, shoes: 8, ribbon: 8 };
 for (const [id, count] of Object.entries(PROP_COUNTS)) for (let k = 0; k < count; k++) {
   const g = new THREE.Group();
@@ -1045,18 +1655,321 @@ function targetProp() {
 }
 const hintEl = document.getElementById('hint');
 function updateHint() {
-  const p = document.pointerLockElement === canvas && !invOpen && !caught ? targetProp() : null;
-  hintEl.style.display = p ? 'block' : 'none';
-  if (p) hintEl.textContent = performance.now() < fullUntil ? 'Inventory full' : 'Click to pick up ' + ITEMS[p.userData.id].name;
+  const live = document.pointerLockElement === canvas && !invOpen && !caught;
+  const p = live ? targetProp() : null, dh = live ? targetDoor() : null;
+  const doorFirst = dh && (!p || dh.distance < p.position.distanceTo(camera.position));
+  hintEl.style.display = p || dh ? 'block' : 'none';
+  if (doorFirst) {
+    const d = dh.door;
+    if (d.boarded) hintEl.textContent = slots[selected]?.id === 'axe'
+      ? `Click to chop boards (${d.boards.length} left)`
+      : 'Hold an Axe to chop classroom boards';
+    else if (d.kind === 'bath' && !d.target && slots[selected]?.id !== 'hallpass')
+      hintEl.textContent = 'Hold a Hall Pass to open the bathroom door';
+    else hintEl.textContent = (d.target ? 'Click to close' : 'Click to open') + (d.stall ? ' stall door' : ' door');
+  }
+  else if (p) hintEl.textContent = performance.now() < fullUntil ? 'Inventory full' : 'Click to pick up ' + (p.userData.items ? 'package' : ITEMS[p.userData.id].name);
 }
 let fullUntil = 0;
 addEventListener('mousedown', (e) => {
   if (e.button !== 0 || document.pointerLockElement !== canvas || invOpen || caught) return;
-  const p = targetProp();
+  const p = targetProp(), dh = targetDoor();
+  if (dh && (!p || dh.distance < p.position.distanceTo(camera.position))) { toggleDoor(dh.door); return; }
   if (!p) return;
+  if (p.userData.items) {
+    p.userData.items = p.userData.items.map((it) => ({ id: it.id, n: addItemRemainder(it.id, it.n) })).filter((it) => it.n > 0);
+    if (!p.userData.items.length) { scene.remove(p); props.splice(props.indexOf(p), 1); }
+    else fullUntil = performance.now() + 1500;
+    return;
+  }
   if (addItem(p.userData.id, p.userData.n)) { scene.remove(p); props.splice(props.indexOf(p), 1); }
   else fullUntil = performance.now() + 1500;
 });
+
+/* ---------- Treemu shop ---------- */
+const BASE_VALUE = { stool: 3, plank: 2, nails: 1, duck: 2, bin: 3, bottle: 2, backpack: 4, shoes: 3, ribbon: 2 };
+const UNSELLABLE = new Set(['phone', 'teacherid']);
+const valueCache = {};
+// Crafted items are worth their ingredients plus a 50% premium, so deeper recipes sell for more
+function itemValue(id) {
+  if (valueCache[id] !== undefined) return valueCache[id];
+  let v = 0;
+  if (BASE_VALUE[id]) v = BASE_VALUE[id];
+  else {
+    const r = RECIPES.find((x) => x.out === id);
+    if (r) {
+      const total = r.needs.reduce((t, nd) => t + nd.n * (nd.ids.reduce((a, b) => a + itemValue(b), 0) / nd.ids.length), 0);
+      v = Math.ceil((total / r.n) * 1.5);
+    }
+  }
+  return (valueCache[id] = v);
+}
+const sellPrice = (id) => itemValue(id);
+const buyPrice = (id) => itemValue(id) * 2 + 1;
+const BUYABLE = Object.keys(BASE_VALUE);
+var treemuDemand = 0;
+let money = 20, shopTab = 'buy';
+const shopListEl = document.getElementById('treemuList'), shopMoneyEl = document.getElementById('treemuMoney');
+const shopStatusEl = document.getElementById('treemuStatus'), deliveryNoteEl = document.getElementById('deliveryNote');
+const orders = [];
+let deliveryMsgUntil = 0;
+function inventoryCounts() {
+  const counts = {};
+  for (let i = 0; i < GRID0; i++) if (slots[i] && !UNSELLABLE.has(slots[i].id)) counts[slots[i].id] = (counts[slots[i].id] || 0) + slots[i].n;
+  return counts;
+}
+function removeFromInventory(id, n) {
+  for (let i = 0; i < GRID0 && n > 0; i++) {
+    const s = slots[i];
+    if (!s || s.id !== id) continue;
+    const a = Math.min(n, s.n); s.n -= a; n -= a;
+    if (s.n <= 0) slots[i] = null;
+  }
+}
+function sellItem(id, n) {
+  const have = inventoryCounts()[id] || 0;
+  n = Math.min(n, have);
+  if (n <= 0) return;
+  removeFromInventory(id, n);
+  money += n * sellPrice(id);
+  renderInv();
+}
+function buyItem(id) {
+  const price = buyPrice(id);
+  if (money < price) return;
+  money -= price; treemuDemand += price;
+  startOrder([{ id, n: id === 'nails' ? 4 : 1 }]);
+  refreshShop();
+}
+function shopRow(label, price, buttons) {
+  const row = document.createElement('div'); row.className = 'tm-row';
+  const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = label;
+  const pr = document.createElement('span'); pr.className = 'pr'; pr.textContent = '$' + price;
+  row.append(nm, pr, ...buttons);
+  return row;
+}
+function shopButton(text, disabled, fn) {
+  const b = document.createElement('button'); b.textContent = text; b.disabled = disabled;
+  b.addEventListener('click', fn);
+  return b;
+}
+function refreshShop() {
+  shopMoneyEl.textContent = '$' + money.toFixed(2);
+  shopStatusEl.textContent = orders.length ? 'packages delivering...' : (performance.now() < deliveryMsgUntil ? 'Package delivered!' : '');
+  document.querySelectorAll('#treemuTabs button').forEach((b) => b.classList.toggle('on', b.dataset.tab === shopTab));
+  shopListEl.textContent = '';
+  if (shopTab === 'buy') {
+    for (const id of BUYABLE) {
+      const qty = id === 'nails' ? 4 : 1;
+      shopListEl.append(shopRow(`${ITEMS[id].icon} ${formatItemQuantity(id, qty)}`, buyPrice(id), [shopButton('Buy', money < buyPrice(id), () => buyItem(id))]));
+    }
+  } else {
+    const counts = inventoryCounts(), ids = Object.keys(counts);
+    if (!ids.length) { const e = document.createElement('div'); e.className = 'tm-empty'; e.textContent = 'Nothing to sell. Items in your inventory (not the crafting grid) show up here.'; shopListEl.append(e); }
+    for (const id of ids) {
+      const btns = [shopButton('Sell 1', false, () => sellItem(id, 1))];
+      if (counts[id] > 1) btns.push(shopButton('All', false, () => sellItem(id, counts[id])));
+      shopListEl.append(shopRow(`${ITEMS[id].icon} ${ITEMS[id].name} ×${counts[id]}`, sellPrice(id), btns));
+    }
+  }
+}
+document.querySelectorAll('#treemuTabs button').forEach((b) => b.addEventListener('click', () => { shopTab = b.dataset.tab; refreshShop(); }));
+phone.querySelector('.app[data-app="treemu"]').addEventListener('click', refreshShop);
+
+// Delivery drone: flies the halls toward the player, drops the package at their feet, then leaves
+function buildDrone() {
+  const g = new THREE.Group();
+  const dark = bodyMat(0x2b2f36);
+  bx(0.5, 0.12, 0.5, 0, 0, 0, dark, g);
+  const rotors = [];
+  for (const [x, z] of [[0.3, 0.3], [-0.3, 0.3], [0.3, -0.3], [-0.3, -0.3]]) {
+    bx(0.04, 0.06, 0.04, x, 0.04, z, dark, g);
+    const r = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.01, 14), new THREE.MeshBasicMaterial({ color: 0x9aa0a8, transparent: true, opacity: 0.45 }));
+    r.position.set(x, 0.09, z); g.add(r); rotors.push(r);
+  }
+  const light = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 6), new THREE.MeshBasicMaterial({ color: 0xff3030 }));
+  light.position.set(0, -0.07, 0.25); g.add(light);
+  const cargo = new THREE.Group(); PROP_BUILDERS.package(cargo); cargo.position.y = -0.4; g.add(cargo);
+  g.userData = { rotors, cargo, light };
+  return g;
+}
+function startOrder(items) {
+  const order = { items, state: 'wait', timer: 5 + Math.random() * 3, drone: null, path: [], repath: 0, hover: 0 };
+  orders.push(order);
+  deliveryNoteEl.textContent = 'packages delivering...';
+  deliveryNoteEl.style.display = 'block';
+}
+const FLY_Y = 2.3, DRONE_SPEED = 6;
+function cellOf(x, z) { return [toGrid(x), toGrid(z)]; }
+function launchDrone(order) {
+  const [px, pz] = cellOf(player.pos.x, player.pos.z);
+  const dist = bfsDistances(Math.min(Math.max(px, 1), N - 2), Math.min(Math.max(pz, 1), N - 2));
+  const far = [];
+  for (let i = 0; i < dist.length; i++) if (dist[i] >= 10 && dist[i] <= 24) far.push(i);
+  const pick = far.length ? far[Math.floor(Math.random() * far.length)] : randomOpenCell()[1] * N + randomOpenCell()[0];
+  order.home = new THREE.Vector3((pick % N + 0.5) * CELL, FLY_Y, (((pick / N) | 0) + 0.5) * CELL);
+  order.drone = buildDrone();
+  order.drone.position.copy(order.home);
+  scene.add(order.drone);
+  order.state = 'fly';
+}
+function steerDrone(order, goal, dt, thresh) {
+  const d = order.drone;
+  while (order.path.length && Math.hypot(order.path[0][0] - d.position.x, order.path[0][1] - d.position.z) < 0.5) order.path.shift();
+  const tx = order.path.length ? order.path[0][0] : goal.x, tz = order.path.length ? order.path[0][1] : goal.z;
+  const dx = tx - d.position.x, dz = tz - d.position.z, len = Math.hypot(dx, dz);
+  if (len > 0.01) {
+    const step = Math.min(len, DRONE_SPEED * dt);
+    d.position.x += dx / len * step; d.position.z += dz / len * step;
+    d.rotation.y = Math.atan2(dx, dz);
+  }
+  return Math.hypot(goal.x - d.position.x, goal.z - d.position.z) < thresh;
+}
+const fallingPackages = [], _goal = new THREE.Vector3();
+function updateShop(dt, time) {
+  for (let i = orders.length - 1; i >= 0; i--) {
+    const o = orders[i];
+    if (o.state === 'wait') { o.timer -= dt; if (o.timer <= 0) launchDrone(o); continue; }
+    const d = o.drone, ud = d.userData;
+    ud.rotors.forEach((r, k) => { r.rotation.y = time * 40 + k; });
+    ud.light.visible = Math.sin(time * 8) > 0;
+    d.position.y = FLY_Y + Math.sin(time * 3 + i) * 0.06;
+    if (o.state === 'fly') {
+      o.repath -= dt;
+      if (o.repath <= 0) {
+        o.repath = 1.2;
+        const [sx, sz] = cellOf(d.position.x, d.position.z), [tx, tz] = cellOf(player.pos.x, player.pos.z);
+        o.path = bfs(sx, sz, tx, tz) || [];
+      }
+      _goal.set(player.pos.x, 0, player.pos.z);
+      if (steerDrone(o, _goal, dt, 0.4)) { o.state = 'drop'; o.hover = 0.8; }
+    } else if (o.state === 'drop') {
+      o.hover -= dt;
+      if (o.hover <= 0 || !ud.cargo.visible) {
+        if (ud.cargo.visible) {
+          ud.cargo.visible = false;
+          const pkg = new THREE.Group();
+          PROP_BUILDERS.package(pkg);
+          const hit = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.5, 0.6), new THREE.MeshBasicMaterial());
+          hit.visible = false; hit.position.y = 0.25; pkg.add(hit);
+          pkg.position.set(player.pos.x, FLY_Y - 0.4, player.pos.z);
+          pkg.userData = { id: 'package', n: 1, items: o.items, vy: 0 };
+          scene.add(pkg); props.push(pkg); fallingPackages.push(pkg);
+          o.path = []; o.repath = 0; o.leaveY = 0;
+        }
+        o.state = 'leave';
+      }
+    } else if (o.state === 'leave') {
+      o.repath -= dt;
+      if (o.repath <= 0) {
+        o.repath = 1.2;
+        const [sx, sz] = cellOf(d.position.x, d.position.z), [tx, tz] = cellOf(o.home.x, o.home.z);
+        o.path = bfs(sx, sz, tx, tz) || [];
+      }
+      if (steerDrone(o, o.home, dt, 0.5)) { scene.remove(d); orders.splice(i, 1); deliveryMsgUntil = performance.now() + 4000; }
+    }
+  }
+  for (let i = fallingPackages.length - 1; i >= 0; i--) {
+    const p = fallingPackages[i];
+    p.userData.vy -= 20 * dt;
+    p.position.y = Math.max(0, p.position.y + p.userData.vy * dt);
+    if (p.position.y === 0) fallingPackages.splice(i, 1);
+  }
+  const showNote = orders.length > 0 || performance.now() < deliveryMsgUntil;
+  deliveryNoteEl.style.display = showNote ? 'block' : 'none';
+  deliveryNoteEl.textContent = orders.length ? 'packages delivering...' : 'Package delivered! Look at your feet.';
+  const statusKey = orders.length ? 1 : (performance.now() < deliveryMsgUntil ? 2 : 0);
+  if (statusKey !== updateShop.last) refreshShop();
+  updateShop.last = statusKey;
+}
+/* ---------- Stock market ---------- */
+const HIST = 60, TICK = 1.5;
+const STOCKS = [
+  { id: 'dog', name: 'Dog Coin', price: 12, blurb: 'Wild swings, strong upside.', step: () => 0.008 + gauss() * 0.06 },
+  { id: 'crapto', name: 'Crapto Coin', price: 8, blurb: 'Huge pumps and sudden crashes.', step: () => (Math.random() < 0.05 ? -0.35 : 0.006 + gauss() * 0.1) },
+  { id: 'corbok', name: 'Corbok Coin', price: 10, blurb: 'Never goes down. Steady growth.', step: () => 0.002 + Math.random() * 0.008 },
+  { id: 'treemu', name: 'Treemu', price: 15, blurb: 'Grows the more people buy from Treemu.', step: () => 0.002 + Math.min(0.06, treemuDemand * 0.0008) + gauss() * 0.025 },
+  { id: 'schools', name: 'Public Schools', price: 25, blurb: 'Falls often. Bad investment.', step: () => -0.007 + gauss() * 0.035 },
+];
+function gauss() { return (Math.random() + Math.random() + Math.random() - 1.5) * 0.8; }
+const holdings = {};
+for (const st of STOCKS) {
+  const start = st.price;
+  st.hist = [st.price]; holdings[st.id] = 0;
+  for (let i = 0; i < HIST - 1; i++) stockTick(st, true);
+  const k = start / st.price;
+  st.hist = st.hist.map((v) => Math.round(v * k * 100) / 100);
+  st.price = start;
+}
+function stockTick(st, quiet) {
+  const cur = st.hist[st.hist.length - 1];
+  let next = Math.max(0.5, cur * (1 + st.step()));
+  if (st.id === 'corbok') next = Math.max(cur, next);
+  next = Math.round(next * 100) / 100;
+  st.hist.push(next);
+  if (st.hist.length > HIST) st.hist.shift();
+  st.price = next;
+}
+let stockSel = 'dog', stockTimer = 0;
+const stkEl = {
+  money: document.getElementById('stkMoney'), tabs: document.getElementById('stkTabs'), price: document.getElementById('stkPrice'),
+  change: document.getElementById('stkChange'), info: document.getElementById('stkInfo'), graph: document.getElementById('stkGraph'),
+  btns: document.querySelectorAll('#stkBtns button'), screen: document.getElementById('app-stocks'),
+};
+for (const st of STOCKS) {
+  const b = document.createElement('button'); b.textContent = st.name; b.dataset.id = st.id;
+  b.addEventListener('click', () => { stockSel = st.id; refreshStocks(); });
+  stkEl.tabs.append(b);
+}
+function refreshStocks() {
+  const st = STOCKS.find((x) => x.id === stockSel), h = st.hist, prev = h.length > 1 ? h[h.length - 2] : h[0];
+  const pct = (st.price - prev) / prev * 100, owned = holdings[st.id];
+  stkEl.money.textContent = '$' + money.toFixed(2);
+  stkEl.tabs.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.id === stockSel));
+  stkEl.price.textContent = '$' + st.price.toFixed(2);
+  stkEl.change.textContent = `${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%`;
+  stkEl.change.style.color = pct >= 0 ? '#8fe388' : '#ff6b6b';
+  stkEl.info.textContent = `${st.blurb} You own ${owned} (worth $${(owned * st.price).toFixed(2)}).`;
+  stkEl.btns.forEach((b) => {
+    const a = b.dataset.act;
+    b.disabled = a === 'b1' ? money < st.price : a === 'b10' ? money < st.price * 10 : owned < (a === 's1' ? 1 : 1);
+  });
+  const c = stkEl.graph, g = c.getContext('2d'), w = c.width, ht = c.height;
+  g.clearRect(0, 0, w, ht);
+  const lo = Math.min(...h), hi = Math.max(...h), span = hi - lo || 1;
+  g.strokeStyle = '#2a2a2a'; g.lineWidth = 1;
+  for (let i = 1; i < 4; i++) { g.beginPath(); g.moveTo(0, ht * i / 4); g.lineTo(w, ht * i / 4); g.stroke(); }
+  g.strokeStyle = h[h.length - 1] >= h[0] ? '#8fe388' : '#ff6b6b'; g.lineWidth = 2; g.beginPath();
+  h.forEach((v, i) => { const x = i / (HIST - 1) * w, y = ht - 8 - (v - lo) / span * (ht - 16); i ? g.lineTo(x, y) : g.moveTo(x, y); });
+  g.stroke();
+  g.fillStyle = '#888'; g.font = '10px sans-serif';
+  g.fillText('$' + hi.toFixed(2), 3, 11); g.fillText('$' + lo.toFixed(2), 3, ht - 3);
+}
+function tradeStock(act) {
+  const st = STOCKS.find((x) => x.id === stockSel);
+  const buy = act === 'b1' ? 1 : act === 'b10' ? 10 : 0;
+  if (buy) {
+    if (money < st.price * buy) return;
+    money = Math.round((money - st.price * buy) * 100) / 100; holdings[st.id] += buy;
+  } else {
+    const n = act === 's1' ? 1 : holdings[st.id];
+    if (!n || holdings[st.id] < n) return;
+    holdings[st.id] -= n; money = Math.round((money + st.price * n) * 100) / 100;
+  }
+  refreshStocks(); refreshShop();
+}
+stkEl.btns.forEach((b) => b.addEventListener('click', () => tradeStock(b.dataset.act)));
+phone.querySelector('.app[data-app="stocks"]').addEventListener('click', refreshStocks);
+function updateStocks(dt) {
+  treemuDemand *= Math.pow(0.97, dt);
+  stockTimer += dt;
+  if (stockTimer < TICK) return;
+  stockTimer -= TICK;
+  for (const st of STOCKS) stockTick(st);
+  if (stkEl.screen.classList.contains('on')) refreshStocks();
+}
+shopReady = true;
+refreshShop();
 renderInv();
 
 /* ---------- Loop ---------- */
@@ -1070,6 +1983,30 @@ addEventListener('resize', resize); resize();
 
 const DAY = new THREE.Color(0x8a7d3c), NIGHT = new THREE.Color(0x000000), skyColor = new THREE.Color();
 const flashEl = document.getElementById('flash');
+const _UP = new THREE.Vector3(0, 1, 0);
+const _mPos = new THREE.Vector3(), _mN = new THREE.Vector3(), _mF = new THREE.Vector3(), _mR = new THREE.Vector3();
+function updateMirror(time) {
+  let best = null, bestD = 81;
+  for (const m of mirrorSpots) {
+    m.getWorldPosition(_mPos);
+    const d = (_mPos.x - player.pos.x) ** 2 + (_mPos.z - player.pos.z) ** 2;
+    if (d < bestD) { bestD = d; best = m; }
+  }
+  if (!best) return;
+  best.getWorldPosition(_mPos);
+  _mN.set(-1, 0, 0).transformDirection(best.parent.matrixWorld);
+  camera.getWorldDirection(_mF); _mF.y = 0;
+  if (_mF.lengthSq() < 1e-4) return;
+  _mF.normalize();
+  _mF.addScaledVector(_mN, -2 * _mF.dot(_mN));
+  // viewer's right = d x up, with d = -n
+  _mR.set(-_mN.x, 0, -_mN.z).cross(_UP);
+  mirrorAvatar.rotation.y = Math.atan2(_mF.dot(_mR), _mF.dot(_mN));
+  CougarAvatar.animate(mirrorAvatar, time, Math.hypot(player.vel.x, player.vel.z), player.crouch);
+  renderer.setRenderTarget(mirrorRT);
+  renderer.render(mirrorScene, mirrorCam);
+  renderer.setRenderTarget(null);
+}
 let last = performance.now(), t = 0;
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now; t += dt;
@@ -1077,6 +2014,10 @@ function frame(now) {
   const steps = 3;
   for (let i = 0; i < steps; i++) { update(dt / steps); updateMonsters(dt / steps); }
   updateMonsterVisuals(dt, t);
+  updateDoors(dt);
+  updateExam(t);
+  updateShop(dt, t);
+  updateStocks(dt);
   alertEl.style.opacity = monsters.some((m) => m.state === 'chase') && !caught ? 1 : 0;
   flickerMat.color.setScalar(Math.sin(t * 47) * Math.sin(t * 13) > 0.55 ? 0.35 : 1).multiply(new THREE.Color(0xfffbd0));
   const dark = darknessAt(player.pos.x, player.pos.z);
@@ -1096,6 +2037,7 @@ function frame(now) {
   if (phoneScreenMat) phoneScreenMat.color.set(phoneState === 'closed' ? 0x000000 : 0x3a8fd0);
   const isMoving = Math.hypot(player.vel.x, player.vel.z) > 0.08;
   heldRoot.position.y = -0.28 + Math.sin(t * 2) * 0.004 + (isMoving ? Math.sin(t * 10) * 0.012 : 0);
+  updateMirror(t);
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }

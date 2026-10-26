@@ -139,7 +139,7 @@
     .option-title { margin-bottom: 3px; font: 600 20px var(--display); text-transform: uppercase; transition: color .15s; }
     .option-desc { color: var(--muted); font-size: 10px; }
     .option-arrow { color: var(--muted); }
-    .locker-layout { display: grid; grid-template-columns: minmax(130px, 200px) minmax(180px, 270px); gap: 25px; align-items: center; }
+    .locker-layout { display: grid; grid-template-columns: minmax(130px, 200px) minmax(260px, 420px); gap: 25px; align-items: center; }
     .portrait {
       position: relative;
       height: 286px;
@@ -147,10 +147,12 @@
       border: 1px solid var(--line);
       background: #4a4c3c;
     }
-    .portrait img { width: 100%; height: 100%; object-fit: cover; filter: saturate(.55) contrast(1.08); }
+    .portrait canvas { display: block; width: 100%; height: 100%; }
     .portrait::after { content: ""; position: absolute; inset: 40% 0 0; background: linear-gradient(transparent, rgba(12,14,11,.84)); }
     .portrait-label { position: absolute; z-index: 1; bottom: 12px; left: 12px; font: 600 18px var(--display); text-transform: uppercase; }
-    .custom-controls { display: grid; gap: 18px; }
+    .custom-controls { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
+    .custom-controls .save-button, .custom-controls .control-group:nth-child(3) { grid-column: 1 / -1; }
+    .portrait canvas { cursor: grab; touch-action: none; }
     .control-group label, .control-heading { display: block; margin-bottom: 9px; color: #c5c4b9; font-size: 9px; letter-spacing: 1.6px; text-transform: uppercase; }
     .swatches { display: flex; gap: 8px; }
     .swatch { width: 27px; height: 27px; padding: 0; border: 2px solid transparent; border-radius: 50%; cursor: pointer; }
@@ -189,6 +191,10 @@
     }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
   </style>
+  <script type="importmap">
+    { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+  </script>
+  <script src="assets/avatar.js"></script>
 </head>
 <body>
   <div class="scene">
@@ -243,18 +249,18 @@
           <h2 class="screen-title">Your <span>locker</span></h2>
           <div class="locker-layout">
             <div class="portrait">
-              <img id="portrait-image" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=700&h=1000&q=85" alt="Character preview">
+              <canvas id="portrait-image" width="400" height="572" role="img" aria-label="Character preview"></canvas>
               <div class="portrait-label" id="character-name">The New Kid</div>
             </div>
             <div class="custom-controls">
-              <div class="control-group"><span class="control-heading">Jacket color</span><div class="swatches" aria-label="Jacket color">
-                <button class="swatch" style="background:#c8ed4c" aria-label="Lime" aria-pressed="true" data-color="#c8ed4c"></button>
-                <button class="swatch" style="background:#e77948" aria-label="Rust" aria-pressed="false" data-color="#e77948"></button>
-                <button class="swatch" style="background:#789b9c" aria-label="Teal" aria-pressed="false" data-color="#789b9c"></button>
-                <button class="swatch" style="background:#d8d1bd" aria-label="Stone" aria-pressed="false" data-color="#d8d1bd"></button>
-              </div></div>
-              <div class="control-group"><label for="outfit">Outfit</label><select class="select-control" id="outfit"><option>Varsity jacket</option><option>Campus security</option><option>Track team</option><option>Night study</option></select></div>
-              <div class="control-group"><label for="character">Character</label><select class="select-control" id="character"><option>The New Kid</option><option>Hall Monitor</option><option>Transfer Student</option></select></div>
+              <div class="control-group"><label for="character">Character preset</label><select class="select-control" id="character"></select></div>
+              <div class="control-group"><label for="outfit">Outfit</label><select class="select-control" id="outfit"></select></div>
+              <div class="control-group"><span class="control-heading">Jacket color</span><div class="swatches" id="swatches" aria-label="Jacket color"></div></div>
+              <div class="control-group"><label for="skin">Skin tone</label><select class="select-control" id="skin"></select></div>
+              <div class="control-group"><label for="hairStyle">Hair style</label><select class="select-control" id="hairStyle"></select></div>
+              <div class="control-group"><label for="hairColor">Hair color</label><select class="select-control" id="hairColor"></select></div>
+              <div class="control-group"><label for="pants">Pants</label><select class="select-control" id="pants"></select></div>
+              <div class="control-group"><label for="build">Build</label><select class="select-control" id="build"></select></div>
               <button class="save-button" id="save-look">Save look</button>
             </div>
           </div>
@@ -320,19 +326,6 @@
       });
     });
 
-    document.querySelectorAll('.swatch').forEach((swatch) => {
-      swatch.addEventListener('click', () => {
-        document.querySelectorAll('.swatch').forEach((item) => item.setAttribute('aria-pressed', String(item === swatch)));
-        document.querySelector('.portrait-label').style.color = swatch.dataset.color;
-      });
-    });
-
-    document.querySelector('#character').addEventListener('change', (event) => {
-      document.querySelector('#character-name').textContent = event.target.value;
-    });
-    document.querySelector('#save-look').addEventListener('click', () => {
-      document.querySelector('#locker-notice').textContent = 'Look saved for this session.';
-    });
     document.querySelector('#master-volume').addEventListener('input', (event) => {
       document.querySelector('#volume-value').textContent = `${event.target.value}%`;
     });
@@ -343,6 +336,89 @@
       control.addEventListener('change', () => {
         document.querySelector('#settings-notice').textContent = 'Settings updated for this session.';
       });
+    });
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+    const A = window.CougarAvatar;
+    const LOOK_KEY = 'cougarNation.playerLook';
+    const notice = document.querySelector('#locker-notice');
+    const canvas = document.querySelector('#portrait-image');
+    const label = document.querySelector('#character-name');
+    const swatchBox = document.querySelector('#swatches');
+    const selects = {
+      character: Object.keys(A.CHARACTERS), outfit: A.OUTFITS, skin: Object.keys(A.SKINS),
+      hairStyle: A.HAIR_STYLES, hairColor: Object.keys(A.HAIR_COLORS), pants: Object.keys(A.PANTS), build: Object.keys(A.BUILDS)
+    };
+    for (const [id, options] of Object.entries(selects)) {
+      const el = document.querySelector('#' + id);
+      options.forEach((o) => el.add(new Option(o, o)));
+      el.addEventListener('change', () => {
+        if (id === 'character') look = A.normalizeLook({ ...A.DEFAULT_LOOK, ...A.CHARACTERS[el.value], character: el.value });
+        else look[id] = el.value;
+        sync();
+      });
+    }
+    A.JACKET_COLORS.forEach((color) => {
+      const b = document.createElement('button');
+      b.className = 'swatch'; b.style.background = color; b.dataset.color = color; b.setAttribute('aria-label', 'Jacket ' + color);
+      b.addEventListener('click', () => { look.jacketColor = color; sync(); });
+      swatchBox.append(b);
+    });
+
+    let look = A.normalizeLook(null);
+    try { look = A.normalizeLook(JSON.parse(localStorage.getItem(LOOK_KEY) || 'null')); }
+    catch (e) { notice.textContent = 'Could not load the saved look from this browser.'; }
+
+    let renderer, scene, camera, avatar, spin = 0, dragging = false, lastX = 0;
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      renderer.setSize(400, 572, false);
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      scene = new THREE.Scene();
+      scene.add(new THREE.HemisphereLight('#ffffff', '#555560', 1.6));
+      const key = new THREE.DirectionalLight('#fff4dd', 2.2); key.position.set(2, 4, 3); scene.add(key);
+      camera = new THREE.PerspectiveCamera(32, 400 / 572, 0.1, 50);
+      camera.position.set(0, 1.0, 4.6); camera.lookAt(0, 0.9, 0);
+      canvas.addEventListener('pointerdown', (e) => { dragging = true; lastX = e.clientX; canvas.setPointerCapture(e.pointerId); });
+      canvas.addEventListener('pointermove', (e) => { if (dragging) { spin += (e.clientX - lastX) * 0.01; lastX = e.clientX; } });
+      const stop = () => { dragging = false; };
+      canvas.addEventListener('pointerup', stop); canvas.addEventListener('pointercancel', stop);
+      renderer.setAnimationLoop((ms) => {
+        if (!dragging) spin += 0.006;
+        if (avatar && document.querySelector('#locker-screen').classList.contains('active')) {
+          avatar.rotation.y = spin;
+          A.animate(avatar, ms / 1000, 0, false);
+          renderer.render(scene, camera);
+        }
+      });
+    } catch (e) {
+      notice.textContent = '3D preview unavailable (WebGL or three.js failed to load). You can still pick and save a look.';
+    }
+
+    function sync() {
+      for (const id of Object.keys(selects)) document.querySelector('#' + id).value = look[id];
+      document.querySelectorAll('.swatch').forEach((s) => s.setAttribute('aria-pressed', String(s.dataset.color === look.jacketColor)));
+      label.textContent = look.character;
+      label.style.color = look.jacketColor;
+      if (!scene) return;
+      if (avatar) {
+        scene.remove(avatar);
+        avatar.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
+      }
+      avatar = A.build(THREE, look);
+      scene.add(avatar);
+    }
+    sync();
+
+    document.querySelector('#save-look').addEventListener('click', () => {
+      try {
+        localStorage.setItem(LOOK_KEY, JSON.stringify(look));
+        notice.textContent = 'Look saved. Your 3D character appears in the bathroom mirrors.';
+      } catch (e) {
+        notice.textContent = 'Could not save the look. Check this browser’s storage settings.';
+      }
     });
   </script>
 </body>
