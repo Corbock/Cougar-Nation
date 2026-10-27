@@ -14,7 +14,8 @@ It's like the backrooms but with APs
 - Select a hall pass in the hotbar to open bathroom doors.
 - Classroom doors start boarded up. Select an axe and click the door three times to chop away the boards, then click again to open it.
 - Every classroom has a teacher who offers a math test when you enter. Decline to step back outside and try later; pass at least 6 of 8 addition, subtraction, multiplication, and long-division problems to earn a Teacher ID Pass. Each classroom can be passed once. The teacher's red vision is dangerous while your phone is out, so use its calculator carefully.
-- Use the Teacher ID Pass as a key on the door at the back of the starting cell to enter the Pool Rooms.
+- Use the Teacher ID Pass as a key on the door at the back of the starting cell to enter the Pool Rooms. The pass is kept, not consumed. A matching door at the start of the Pool Rooms leads back to Level 0 (hold the pass and click to open it), so you can travel back and forth.
+- Level 0 shows an on-screen objectives list (craft an axe, find a classroom, pass the test, return to the door). The cell holding the exit door is marked red on the minimap.
 
 ## Fishing
 - Craft a **Fishing Rod** from 1 Screw + 5 Fabric + 3 Wooden Planks (shapeless, in the crafting grid).
@@ -34,3 +35,7 @@ It's like the backrooms but with APs
 ## Character look
 - Open Locker from the main menu to build a customizable 3D character: preset, outfit, jacket color, skin tone, hair style/color, pants, and build. Drag the preview to rotate it.
 - Save the look (stored in the browser). Bathroom mirrors are real reflections of the whole room (walls, stalls, doors, monsters) and show your 3D character, mirroring your movement. The shared model code is in `assets/avatar.js`.
+
+## Options & saves
+
+The phone's Options app has Save game, Autosave (every 30 s), Change keybinds and Quit to menu. Each New Game is its own run stored in localStorage; the main menu's Load save lists all runs (click to load, ✕ to delete). Saves cover position, level, inventory, money, stocks, doors and passed tests; props, ponds and monsters are regenerated on load.

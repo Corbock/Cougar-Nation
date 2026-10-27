@@ -66,7 +66,11 @@
     #stkBtns { display: flex; gap: 6px; }
     #stkBtns button { flex: 1; padding: 6px; border: 0; border-radius: 6px; background: #3d5a80; color: #fff; cursor: pointer; font-size: 12px; }
     #stkBtns button:disabled { opacity: .35; cursor: not-allowed; }
+    #opts, .optsbox, #bindList { padding: 4px 14px; }
     #opts label { display: block; margin: 10px 0; font-size: 15px; }
+    #opts button, .optsbox button, #bindList button { display: block; width: 100%; margin: 8px 0; padding: 9px; border: 0; border-radius: 8px; background: #2d3a4d; color: #fff; font: inherit; cursor: pointer; }
+    #bindList button { display: flex; justify-content: space-between; }
+    #optMsg { font-size: 13px; color: #9fe39f; min-height: 16px; }
     #hud { position: fixed; left: 16px; bottom: 16px; font-size: 13px; text-shadow: 0 0 4px #000; line-height: 1.5; }
     #stamina { width: 140px; height: 6px; border: 1px solid #e8dc8a; margin-top: 4px; }
     #stamina i { display: block; height: 100%; background: #e8dc8a; width: 100%; }
@@ -94,6 +98,9 @@
     .slot .ct { position: absolute; right: 3px; bottom: 0; font-size: 13px; font-weight: bold; color: #fff; text-shadow: 1px 1px 0 #000; }
     #cursorItem { position: fixed; z-index: 9; pointer-events: none; font-size: 26px; display: none; transform: translate(-50%, -50%); }
     #cursorItem .ct { font-size: 13px; font-weight: bold; color: #fff; text-shadow: 1px 1px 0 #000; }
+    #objectives { position: fixed; left: 14px; top: 14px; font-size: 13px; text-shadow: 0 0 4px #000; line-height: 1.6; pointer-events: none; }
+    #objectives b { display: block; letter-spacing: 2px; font-size: 11px; opacity: .8; }
+    #objectives .done { text-decoration: line-through; opacity: .55; }
     #hint { position: fixed; left: 50%; top: calc(50% + 24px); transform: translateX(-50%); font-size: 13px; text-shadow: 0 0 4px #000; display: none; }
     #cross { position: fixed; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px; background: rgba(232,220,138,.6); border-radius: 50%; }
     #alert { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity .3s; box-shadow: inset 0 0 160px 30px rgba(160,0,0,.75); }
@@ -123,6 +130,7 @@
   <canvas id="view"></canvas>
   <div id="cross"></div>
   <div id="hint"></div>
+  <div id="objectives"></div>
   <div id="hotbar"></div>
   <div id="invPanel">
     <div class="invRow">
@@ -208,7 +216,19 @@
     </div>
     <div class="screen appscreen" id="app-opts">
       <header><button class="back">&lsaquo;</button>Options</header>
-      <div id="opts"><label><input type="checkbox" id="optPos" checked> Show coordinates</label></div>
+      <div id="opts">
+        <label><input type="checkbox" id="optPos" checked> Show coordinates</label>
+        <label><input type="checkbox" id="optAuto"> Autosave</label>
+        <button id="optSave">Save game</button>
+        <button id="optBinds">Change keybinds</button>
+        <button id="optQuit">Quit to menu</button>
+        <div id="optMsg"></div>
+      </div>
+    </div>
+    <div class="screen appscreen" id="app-binds">
+      <header><button class="back">&lsaquo;</button>Keybinds</header>
+      <div id="bindList"></div>
+      <div class="optsbox"><button id="bindReset">Reset to defaults</button></div>
     </div>
   </div>
   <div id="deliveryNote"></div>
@@ -480,10 +500,24 @@ const player = {
 const PHYS = { walk: 3.2, sprint: 5.6, crouch: 1.6, accel: 40, airAccel: 8, friction: 9, gravity: 22, jump: 7.2 };
 
 const keys = {};
+const DEFAULT_BINDS = { forward: 'KeyW', back: 'KeyS', left: 'KeyA', right: 'KeyD', sprint: 'ShiftLeft', jump: 'Space', crouch: 'KeyC', inventory: 'KeyE', phone: 'KeyF' };
+const BIND_LABELS = { forward: 'Forward', back: 'Back', left: 'Left', right: 'Right', sprint: 'Sprint', jump: 'Jump', crouch: 'Crouch', inventory: 'Inventory', phone: 'Phone' };
+const BINDS_KEY = 'cougarNation.keybinds';
+const binds = { ...DEFAULT_BINDS };
+try { Object.assign(binds, JSON.parse(localStorage.getItem(BINDS_KEY) || '{}')); } catch (err) { /* defaults */ }
+const ARROW_ALT = { forward: 'ArrowUp', back: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight' };
+const down = (a) => !!(keys[binds[a]] || (ARROW_ALT[a] && keys[ARROW_ALT[a]]) || (a === 'sprint' && binds.sprint === 'ShiftLeft' && keys.ShiftRight));
+let rebinding = null;
 let examPromptOpen = false, examTestActive = false, examRoom = null;
 addEventListener('keydown', (e) => {
-  if (e.code === 'KeyE') { if (!e.repeat && !examPromptOpen && !examTestActive && (invOpen || document.pointerLockElement === canvas)) toggleInventory(); return; }
-  if (e.code === 'KeyF') { if (!e.repeat && !invOpen && (document.pointerLockElement === canvas || phoneState !== 'closed' || examTestActive)) cyclePhone(); return; }
+  if (rebinding) {
+    e.preventDefault();
+    if (e.code !== 'Escape') { binds[rebinding] = e.code; localStorage.setItem(BINDS_KEY, JSON.stringify(binds)); }
+    rebinding = null; renderBinds();
+    return;
+  }
+  if (e.code === binds.inventory) { if (!e.repeat && !examPromptOpen && !examTestActive && (invOpen || document.pointerLockElement === canvas)) toggleInventory(); return; }
+  if (e.code === binds.phone) { if (!e.repeat && !invOpen && (document.pointerLockElement === canvas || phoneState !== 'closed' || examTestActive)) cyclePhone(); return; }
   if (phoneState === 'full' || invOpen || examPromptOpen || examTestActive) return;
   if (/^Digit[1-9]$/.test(e.code)) selectSlot(+e.code.slice(5) - 1);
   keys[e.code] = true;
@@ -620,10 +654,10 @@ function update(dt) {
     return;
   }
   const locked = document.pointerLockElement === canvas && !caught;
-  const f = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0);
-  const s = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0);
-  const wantCrouch = locked && keys.KeyC;
-  const wantSprint = locked && (keys.ShiftLeft || keys.ShiftRight) && f > 0 && !wantCrouch && player.stamina > 0.02;
+  const f = (down('forward') ? 1 : 0) - (down('back') ? 1 : 0);
+  const s = (down('right') ? 1 : 0) - (down('left') ? 1 : 0);
+  const wantCrouch = locked && down('crouch');
+  const wantSprint = locked && down('sprint') && f > 0 && !wantCrouch && player.stamina > 0.02;
 
   let speed = wantCrouch ? PHYS.crouch : wantSprint ? PHYS.sprint : PHYS.walk;
   player.stamina = Math.max(0, Math.min(1, player.stamina + (wantSprint ? -0.22 : 0.15) * dt));
@@ -649,7 +683,7 @@ function update(dt) {
   const add = Math.min(Math.max(0, speed - cur), accel * dt);
   player.vel.x += wx * add; player.vel.z += wz * add;
 
-  if (locked && keys.Space && player.onGround && !wantCrouch) { player.vel.y = PHYS.jump; player.onGround = false; }
+  if (locked && down('jump') && player.onGround && !wantCrouch) { player.vel.y = PHYS.jump; player.onGround = false; }
   player.vel.y -= PHYS.gravity * dt;
 
   player.pos.x += player.vel.x * dt;
@@ -688,7 +722,7 @@ function addPoolWallAcross(z, opening) {
   }
 }
 function buildPoolRooms() {
-  addPoolWallAcross(12, 0);
+  addPoolWallAcross(12, 2);
   for (let i = 0; i < poolRoomCenters.length; i++) {
     const centerZ = poolRoomCenters[i];
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(18, 16), poolFloorMat);
@@ -727,12 +761,47 @@ function buildPoolRooms() {
 }
 buildPoolRooms();
 
+// Door back to Level 0, in the entry wall of the first pool room
+const poolBack = { open: 0, target: 0, pivot: new THREE.Group(), meshes: [], collider: { minX: -1, maxX: 1, minZ: 11.8, maxZ: 12.2 } };
+{
+  const panel = new THREE.Mesh(new THREE.BoxGeometry(2, 2.5, 0.1), poolDoorMat0());
+  panel.position.set(1, 1.25, 0);
+  const knob = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), new THREE.MeshPhongMaterial({ color: 0xd4b24a, shininess: 80 }));
+  knob.position.set(1.8, 1.0, 0.09);
+  const lintel = new THREE.Mesh(new THREE.BoxGeometry(2, 0.5, 0.4), poolWallMat);
+  lintel.position.set(0, 2.75, 12);
+  poolBack.pivot.position.set(-1, 0, 12);
+  poolBack.pivot.add(panel, knob);
+  poolScene.add(poolBack.pivot, lintel);
+  poolBack.meshes.push(panel, knob);
+  poolWalls.push(poolBack.collider);
+}
+function poolDoorMat0() { return new THREE.MeshPhongMaterial({ color: 0x178c91, specular: 0x75eeee, shininess: 70 }); }
+function targetPoolDoor() {
+  camera.updateMatrixWorld();
+  raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+  return raycaster.intersectObjects(poolBack.meshes, false).length > 0;
+}
+function togglePoolBack() {
+  if (slots[selected]?.id !== 'teacherid') return;
+  if (poolBack.target && Math.abs(player.pos.x) < 1.6 && Math.abs(player.pos.z - 12) < 1) return;
+  poolBack.target = poolBack.target ? 0 : 1;
+}
+function updatePoolBack(dt) {
+  const b = poolBack;
+  if (b.open !== b.target) b.open = b.target > b.open ? Math.min(1, b.open + dt * 2.2) : Math.max(0, b.open - dt * 2.2);
+  b.pivot.rotation.y = -Math.PI / 2 * b.open * b.open * (3 - 2 * b.open);
+  const c = b.collider;
+  if (b.open > 0.5) { c.minX = c.maxX = 0; c.minZ = c.maxZ = 200; }
+  else { c.minX = -1; c.maxX = 1; c.minZ = 11.8; c.maxZ = 12.2; }
+}
+
 function updatePoolMovement(dt) {
   const locked = document.pointerLockElement === canvas && !caught;
-  const f = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0);
-  const s = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0);
-  const wantCrouch = locked && keys.KeyC;
-  const wantSprint = locked && (keys.ShiftLeft || keys.ShiftRight) && f > 0 && !wantCrouch && player.stamina > 0.02;
+  const f = (down('forward') ? 1 : 0) - (down('back') ? 1 : 0);
+  const s = (down('right') ? 1 : 0) - (down('left') ? 1 : 0);
+  const wantCrouch = locked && down('crouch');
+  const wantSprint = locked && down('sprint') && f > 0 && !wantCrouch && player.stamina > 0.02;
   const speed = wantCrouch ? PHYS.crouch : wantSprint ? PHYS.sprint : PHYS.walk;
   player.stamina = Math.max(0, Math.min(1, player.stamina + (wantSprint ? -0.22 : 0.15) * dt));
   player.crouch += ((wantCrouch ? 1 : 0) - player.crouch) * Math.min(1, dt * 10);
@@ -748,7 +817,7 @@ function updatePoolMovement(dt) {
   const currentSpeed = player.vel.x * wx + player.vel.z * wz;
   const acceleration = Math.min(Math.max(0, speed - currentSpeed), PHYS.accel * dt);
   player.vel.x += wx * acceleration; player.vel.z += wz * acceleration;
-  if (locked && keys.Space && player.onGround && !wantCrouch) {
+  if (locked && down('jump') && player.onGround && !wantCrouch) {
     player.vel.y = PHYS.jump;
     player.onGround = false;
   }
@@ -948,7 +1017,7 @@ function updateMonsters(dt) {
 }
 
 function caughtByMonster() {
-  caught = true; keys.Space = false;
+  caught = true; keys[binds.jump] = false;
   examPromptOpen = false; examTestActive = false;
   examPromptEl.style.display = 'none'; examTestEl.style.display = 'none';
   player.crouch = 0;
@@ -1008,12 +1077,16 @@ function drawMinimap() {
       mctx.fillRect(mapX(-6.6), mapZ(centerZ - 4.5), mapX(-1.4) - mapX(-6.6), mapZ(centerZ + 2.5) - mapZ(centerZ - 4.5));
       mctx.fillRect(mapX(1.7), mapZ(centerZ - 0.8), mapX(6.3) - mapX(1.7), mapZ(centerZ + 4.4) - mapZ(centerZ - 0.8));
     }
+    mctx.fillStyle = 'rgba(255,30,30,.85)'; // exit door cell
+    mctx.fillRect(mapX(-1), mapZ(11), mapX(1) - mapX(-1), mapZ(13) - mapZ(11));
     const px = mapX(player.pos.x), pz = mapZ(player.pos.z);
     mctx.fillStyle = '#ff3b2a';
     mctx.beginPath(); mctx.arc(px, pz, 4, 0, Math.PI * 2); mctx.fill();
     return;
   }
   mctx.drawImage(mmBase, 0, 0, S, S);
+  mctx.fillStyle = 'rgba(255,30,30,.85)'; // the cell holding the exit door
+  mctx.fillRect(poolDoor.gx / N * S, poolDoor.gy / N * S, S / N, S / N);
   const px = (player.pos.x / WORLD) * S, pz = (player.pos.z / WORLD) * S;
   mctx.save();
   mctx.translate(px, pz);
@@ -1337,6 +1410,26 @@ function heldModel(id) {
   heldRoot.add(wrap);
   heldModels[id] = wrap;
   return wrap;
+}
+// Axe swing: wind up, chop down fast, then ease back. axeSwing is progress 0..1 (-1 when idle)
+let axeSwing = -1;
+const AXE_SWING_TIME = 0.45;
+const easeOut = (k) => 1 - (1 - k) * (1 - k);
+function updateAxeSwing(dt) {
+  if (axeSwing >= 0 && slots[selected]?.id !== 'axe') axeSwing = -1;
+  let rx = 0, rz = 0, px = 0, py = 0, pz = 0;
+  if (axeSwing >= 0) {
+    axeSwing += dt / AXE_SWING_TIME;
+    if (axeSwing >= 1) axeSwing = -1;
+    else {
+      const k = axeSwing, wind = 0.3;
+      const a = k < wind ? -easeOut(k / wind) : k < 0.55 ? -1 + 2.4 * easeOut((k - wind) / (0.55 - wind)) : 1.4 * (1 - easeOut((k - 0.55) / 0.45));
+      rx = -a * 0.9; rz = a * 0.35; px = -a * 0.06; py = a * 0.08; pz = -Math.max(0, a) * 0.12;
+    }
+  }
+  heldRoot.rotation.set(rx, 0, rz);
+  heldRoot.position.x = 0.3 + px; heldRoot.position.z = -0.55 + pz;
+  return py;
 }
 function updateHeld() {
   for (const id in heldModels) heldModels[id].visible = false;
@@ -1664,7 +1757,7 @@ function updateExam(time) {
   if (currentLevel !== 0) return;
   if (caught) return;
   for (const room of examRooms) {
-    room.vision.rotation.y = Math.sin(time * 0.22) * 0.85;
+    room.vision.rotation.y = Math.sin(time * 0.11) * 0.85;
     const localPlayer = room.group.worldToLocal(new THREE.Vector3(player.pos.x, 0, player.pos.z));
     const inside = Math.abs(localPlayer.x) < room.U / 2 + CELL * 0.5 &&
       Math.abs(localPlayer.z) < room.V / 2 + CELL * 0.5;
@@ -1750,12 +1843,13 @@ function targetDoor() {
 function toggleDoor(d) {
   if (d.stall) { d.target = d.target ? 0 : 1; return; }
   if (d.kind === 'level') {
-    if (d.unlocked) return;
     if (slots[selected]?.id !== 'teacherid') return;
-    removeFromInventory('teacherid', 1);
-    renderInv();
-    d.unlocked = true;
-    d.target = 1;
+    if (d.unlocked) {
+      const pad = player.radius + 0.1;
+      if (player.pos.x > d.gx * CELL - pad && player.pos.x < (d.gx + 1) * CELL + pad && player.pos.z > d.gy * CELL - pad && player.pos.z < (d.gy + 1) * CELL + pad) return;
+    }
+    d.unlocked = !d.unlocked;
+    d.target = d.unlocked ? 1 : 0;
     return;
   }
   if (d.boarded) {
@@ -1779,8 +1873,27 @@ function toggleDoor(d) {
   } else d.target = 1;
 }
 
+function returnToLevel0() {
+  currentLevel = 0;
+  stopFishing();
+  poolScene.remove(camera);
+  scene.add(camera);
+  poolDoor.unlocked = true; poolDoor.target = poolDoor.open = 1;
+  player.pos.set((poolDoor.gx + 0.5) * CELL, 0, (poolDoor.gy + 1) * CELL - 0.3);
+  player.vel.set(0, 0, 0);
+  player.yaw = 0;
+  player.pitch = 0;
+  player.crouch = 0;
+  poolBack.target = poolBack.open = 0;
+  document.querySelector('#overlay h1').textContent = document.querySelector('#overlay h1').dataset.l0 || 'LEVEL 0';
+  document.querySelector('#overlay p').textContent = document.querySelector('#overlay p').dataset.l0 || '';
+}
+
 function enterPoolRooms() {
   currentLevel = 1;
+  poolBack.target = poolBack.open = 0;
+  const h1 = document.querySelector('#overlay h1'), pp = document.querySelector('#overlay p');
+  if (h1.dataset.l0 === undefined) { h1.dataset.l0 = h1.textContent; pp.dataset.l0 = pp.textContent; }
   stopFishing();
   scene.remove(camera);
   poolScene.add(camera);
@@ -1909,7 +2022,12 @@ function targetProp() {
 }
 const hintEl = document.getElementById('hint');
 function updateHint() {
-  if (currentLevel !== 0) { hintEl.style.display = 'none'; return; }
+  if (currentLevel !== 0) {
+    const near = document.pointerLockElement === canvas && !invOpen && !caught && targetPoolDoor();
+    hintEl.style.display = near ? 'block' : 'none';
+    if (near) hintEl.textContent = slots[selected]?.id === 'teacherid' ? (poolBack.target ? 'Click to close the door' : 'Click to unlock with the Teacher ID Pass') : 'Hold your Teacher ID Pass to open the door to Level 0';
+    return;
+  }
   const live = document.pointerLockElement === canvas && !invOpen && !caught;
   const p = live ? targetProp() : null, dh = live ? targetDoor() : null;
   const doorFirst = dh && (!p || dh.distance < p.position.distanceTo(camera.position));
@@ -1917,7 +2035,7 @@ function updateHint() {
   if (doorFirst) {
     const d = dh.door;
     if (d.kind === 'level') hintEl.textContent = d.unlocked
-      ? 'Walk through to the Pool Rooms'
+      ? (slots[selected]?.id === 'teacherid' ? 'Walk through to the Pool Rooms (click to close)' : 'Walk through to the Pool Rooms')
       : slots[selected]?.id === 'teacherid' ? 'Click to unlock with the Teacher ID Pass' : 'Hold your Teacher ID Pass to unlock the door';
     else if (d.boarded) hintEl.textContent = slots[selected]?.id === 'axe'
       ? `Click to chop boards (${d.boards.length} left)`
@@ -1934,6 +2052,8 @@ function updateHint() {
 }
 let fullUntil = 0;
 addEventListener('mousedown', (e) => {
+  if (e.button === 0 && document.pointerLockElement === canvas && !invOpen && !caught && slots[selected]?.id === 'axe' && axeSwing < 0) axeSwing = 0;
+  if (e.button === 0 && document.pointerLockElement === canvas && !invOpen && !caught && currentLevel === 1 && targetPoolDoor()) { togglePoolBack(); return; }
   if (e.button !== 0 || document.pointerLockElement !== canvas || invOpen || caught || currentLevel !== 0) return;
   const p = targetProp(), dh = targetDoor();
   if (dh && (!p || dh.distance < p.position.distanceTo(camera.position))) { toggleDoor(dh.door); return; }
@@ -2259,6 +2379,98 @@ function updateMirror(time) {
   CougarAvatar.animate(mirrorAvatar, time, Math.hypot(player.vel.x, player.vel.z), player.crouch);
 }
 let last = performance.now(), t = 0;
+
+/* ---------- Saves, autosave, options ---------- */
+const SAVES_KEY = 'cougarNation.saves', ACTIVE_KEY = 'cougarNation.activeRun', AUTO_KEY = 'cougarNation.autosave';
+const readSaves = () => { try { return JSON.parse(localStorage.getItem(SAVES_KEY) || '{}'); } catch (err) { return {}; } };
+const runParam = new URLSearchParams(location.search).get('run');
+let runId = runParam || localStorage.getItem(ACTIVE_KEY);
+if (!runId) runId = 'run' + Date.now().toString(36);
+localStorage.setItem(ACTIVE_KEY, runId);
+let playSeconds = readSaves()[runId]?.playSeconds || 0, autoTimer = 0;
+const optMsg = document.getElementById('optMsg'), optAuto = document.getElementById('optAuto');
+optAuto.checked = localStorage.getItem(AUTO_KEY) === '1';
+optAuto.addEventListener('change', () => { localStorage.setItem(AUTO_KEY, optAuto.checked ? '1' : '0'); optMsg.textContent = optAuto.checked ? 'Autosave on.' : 'Autosave off.'; });
+
+const objDone = [false, false, false, false];
+function snapshot() {
+  return {
+    level: currentLevel, pos: [player.pos.x, player.pos.y, player.pos.z], yaw: player.yaw, pitch: player.pitch,
+    slots: slots.map((s) => s && { id: s.id, n: s.n }), selected, money, holdings: { ...holdings }, treemuDemand,
+    doors: doors.map((d) => ({ target: d.target, boards: d.boards.length, unlocked: !!d.unlocked })),
+    poolUnlocked: poolDoor.unlocked, passed: classrooms.map((c) => !!c.examPassed), obj: objDone.slice(),
+  };
+}
+function saveGame(quiet) {
+  const saves = readSaves(), old = saves[runId];
+  saves[runId] = { id: runId, name: old?.name || ('Run ' + (Object.keys(saves).length + 1)), created: old?.created || Date.now(),
+    time: Date.now(), playSeconds: Math.round(playSeconds), level: currentLevel, money, data: snapshot() };
+  try { localStorage.setItem(SAVES_KEY, JSON.stringify(saves)); } catch (err) { optMsg.textContent = 'Save failed.'; return; }
+  if (!quiet) optMsg.textContent = 'Saved at ' + new Date().toLocaleTimeString();
+}
+function loadGame(d) {
+  slots.fill(null);
+  d.slots.forEach((s, i) => { if (i < slots.length) slots[i] = s; });
+  selected = d.selected || 0;
+  money = d.money; treemuDemand = d.treemuDemand || 0;
+  Object.assign(holdings, d.holdings);
+  d.doors.forEach((sd, i) => {
+    const door = doors[i]; if (!door) return;
+    while (door.boards.length > sd.boards) {
+      for (const board of door.boards.pop()) {
+        board.parent && board.parent.remove(board);
+        const k = doorMeshes.indexOf(board); if (k !== -1) doorMeshes.splice(k, 1);
+      }
+    }
+    door.boarded = door.boards.length > 0;
+    door.target = door.open = sd.target; door.unlocked = sd.unlocked || door.unlocked;
+  });
+  poolDoor.unlocked = d.poolUnlocked; if (poolDoor.unlocked) poolDoor.target = poolDoor.open = 1;
+  d.passed.forEach((v, i) => { if (classrooms[i]) classrooms[i].examPassed = v; });
+  if (d.obj) d.obj.forEach((v, i) => { objDone[i] = v; });
+  if (d.level === 1) enterPoolRooms();
+  player.pos.set(...d.pos); player.yaw = d.yaw; player.pitch = d.pitch; player.vel.set(0, 0, 0);
+  renderInv(); refreshStocks && refreshStocks();
+}
+if (runParam && readSaves()[runId]) { try { loadGame(readSaves()[runId].data); } catch (err) { console.error('load failed', err); } }
+function saveTick(dt) {
+  playSeconds += dt;
+  if (!optAuto.checked) return;
+  autoTimer += dt;
+  if (autoTimer >= 30) { autoTimer = 0; saveGame(true); optMsg.textContent = 'Autosaved.'; }
+}
+document.getElementById('optSave').addEventListener('click', () => saveGame(false));
+document.getElementById('optQuit').addEventListener('click', () => { saveGame(true); location.href = 'index.html'; });
+function renderBinds() {
+  const list = document.getElementById('bindList'); list.innerHTML = '';
+  for (const a of Object.keys(DEFAULT_BINDS)) {
+    const b = document.createElement('button');
+    b.innerHTML = '<span>' + BIND_LABELS[a] + '</span><b>' + (rebinding === a ? 'press a key...' : binds[a].replace(/^Key|^Digit/, '')) + '</b>';
+    b.addEventListener('click', () => { rebinding = a; renderBinds(); });
+    list.appendChild(b);
+  }
+}
+document.getElementById('optBinds').addEventListener('click', () => { showScreen('app-binds'); renderBinds(); });
+document.querySelector('#app-binds .back').addEventListener('click', () => { rebinding = null; showScreen('app-opts'); });
+document.getElementById('bindReset').addEventListener('click', () => {
+  Object.assign(binds, DEFAULT_BINDS); localStorage.setItem(BINDS_KEY, JSON.stringify(binds)); rebinding = null; renderBinds();
+});
+
+/* ---------- Objectives ---------- */
+const OBJ_TEXT = ['Craft an axe', 'Find a classroom', 'Pass the test', 'Return to the door'];
+const objEl = document.getElementById('objectives');
+let objShown = '';
+function updateObjectives() {
+  if (currentLevel !== 0) { if (objShown !== 'off') { objEl.style.display = 'none'; objShown = 'off'; } return; }
+  const gx = toGrid(player.pos.x), gy = toGrid(player.pos.z);
+  if (!objDone[0] && slots.some((x) => x?.id === 'axe')) objDone[0] = true;
+  if (!objDone[1] && classrooms.some((c) => gx >= c.x0 && gx < c.x0 + c.w && gy >= c.y0 && gy < c.y0 + c.h)) objDone[1] = true;
+  if (!objDone[2] && classrooms.some((c) => c.examPassed)) objDone[2] = objDone[1] = true;
+  if (!objDone[3] && objDone[2] && poolDoor.unlocked) objDone[3] = true;
+  const html = '<b>OBJECTIVES</b>' + OBJ_TEXT.map((t, i) => `<div class="${objDone[i] ? 'done' : ''}">${objDone[i] ? '\u2611' : '\u2610'} ${t}</div>`).join('');
+  if (html !== objShown) { objEl.innerHTML = html; objShown = html; }
+  objEl.style.display = '';
+}
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now; t += dt;
   // Sub-step so fast movement can't tunnel through walls
@@ -2273,7 +2485,13 @@ function frame(now) {
     updateMonsterVisuals(dt, t);
     updateDoors(dt);
     updateExam(t);
-  } else alertEl.style.opacity = 0;
+  } else {
+    alertEl.style.opacity = 0;
+    updatePoolBack(dt);
+    if (poolBack.open > 0.7 && player.pos.z > 12.3) returnToLevel0();
+  }
+  saveTick(dt);
+  updateObjectives();
   updateShop(dt, t);
   updateFishing(dt, t);
   updateStocks(dt);
@@ -2295,7 +2513,8 @@ function frame(now) {
   stamEl.style.width = (player.stamina * 100) + '%';
   if (phoneScreenMat) phoneScreenMat.color.set(phoneState === 'closed' ? 0x000000 : 0x3a8fd0);
   const isMoving = Math.hypot(player.vel.x, player.vel.z) > 0.08;
-  heldRoot.position.y = -0.28 + Math.sin(t * 2) * 0.004 + (isMoving ? Math.sin(t * 10) * 0.012 : 0);
+  const swingLift = updateAxeSwing(dt);
+  heldRoot.position.y = -0.28 + swingLift + Math.sin(t * 2) * 0.004 + (isMoving ? Math.sin(t * 10) * 0.012 : 0);
   updateMirror(t);
   renderer.render(currentLevel === 0 ? scene : poolScene, camera);
   requestAnimationFrame(frame);

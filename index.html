@@ -215,7 +215,7 @@
             <button class="menu-button" data-screen="single"><span class="menu-index">01</span><span class="menu-label">Single Player</span><span class="arrow" aria-hidden="true">↗</span></button>
             <button class="menu-button" data-screen="multiplayer"><span class="menu-index">02</span><span class="menu-label">Multiplayer</span><span class="arrow" aria-hidden="true">↗</span></button>
             <button class="menu-button" data-screen="locker"><span class="menu-index">03</span><span class="menu-label">Locker</span><span class="arrow" aria-hidden="true">↗</span></button>
-            <button class="menu-button" data-screen="settings"><span class="menu-index">04</span><span class="menu-label">Settings</span><span class="arrow" aria-hidden="true">↗</span></button>
+            <button class="menu-button" data-screen="settings"><span class="menu-index">04</span><span class="menu-label">Options</span><span class="arrow" aria-hidden="true">↗</span></button>
           </nav>
           <div class="footer-line"><span>Build <strong>01.04.26</strong></span><span>Players <strong>1 / 4</strong></span></div>
         </div>
@@ -226,8 +226,9 @@
           <h2 class="screen-title">Single <span>player</span></h2>
           <div class="option-list">
             <button class="option" data-action="new-game"><span class="option-icon">01</span><span><span class="option-title">New game</span><span class="option-desc">Start a fresh night on campus</span></span><span class="option-arrow">↗</span></button>
-            <button class="option" data-action="load-game"><span class="option-icon">02</span><span><span class="option-title">Load save</span><span class="option-desc">Continue from your last session</span></span><span class="option-arrow">↗</span></button>
+            <button class="option" data-action="load-game"><span class="option-icon">02</span><span><span class="option-title">Load save</span><span class="option-desc">Pick up one of your saved runs</span></span><span class="option-arrow">↗</span></button>
           </div>
+          <div class="option-list" id="save-list"></div>
           <div class="notice" id="single-notice" role="status"></div>
         </div>
 
@@ -270,7 +271,7 @@
         <div class="screen" id="settings-screen">
           <button class="back-button" data-screen="home">← &nbsp; Main menu</button>
           <div class="eyebrow">Tune your late pass</div>
-          <h2 class="screen-title">Set<span>tings</span></h2>
+          <h2 class="screen-title">Opt<span>ions</span></h2>
           <div class="setting-list">
             <div class="setting-row"><label class="setting-name" for="master-volume">Master volume</label><div class="setting-value"><input id="master-volume" type="range" min="0" max="100" value="78"><span id="volume-value">78%</span></div></div>
             <div class="setting-row"><label class="setting-name" for="sensitivity">Look sensitivity</label><div class="setting-value"><input id="sensitivity" type="range" min="1" max="10" value="5"><span id="sensitivity-value">5</span></div></div>
@@ -302,6 +303,35 @@
       toastTimeout = setTimeout(() => { toast.hidden = true; }, 2600);
     }
 
+    function renderSaves() {
+      const list = document.querySelector('#save-list'), notice = document.querySelector('#single-notice');
+      let saves = {};
+      try { saves = JSON.parse(localStorage.getItem('cougarNation.saves') || '{}'); } catch (err) { /* none */ }
+      const runs = Object.values(saves).sort((a, b) => b.time - a.time);
+      list.innerHTML = '';
+      notice.textContent = runs.length ? '' : 'No save data found. Start a new game to begin.';
+      for (const run of runs) {
+        const row = document.createElement('div');
+        row.className = 'option';
+        const mins = Math.floor((run.playSeconds || 0) / 60);
+        row.innerHTML = '<span class="option-icon">' + (run.level === 1 ? 'L1' : 'L0') + '</span><span><span class="option-title"></span><span class="option-desc"></span></span><span class="option-arrow">✕</span>';
+        row.querySelector('.option-title').textContent = run.name;
+        row.querySelector('.option-desc').textContent = (run.level === 1 ? 'Pool Rooms' : 'Level 0') + ' · $' + Number(run.money || 0).toFixed(2) + ' · ' + mins + ' min · ' + new Date(run.time).toLocaleString();
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', (ev) => {
+          if (ev.target.classList.contains('option-arrow')) {
+            delete saves[run.id];
+            localStorage.setItem('cougarNation.saves', JSON.stringify(saves));
+            renderSaves();
+            return;
+          }
+          localStorage.setItem('cougarNation.activeRun', run.id);
+          window.location.href = 'game.html?run=' + run.id;
+        });
+        list.appendChild(row);
+      }
+    }
+
     document.querySelectorAll('[data-screen]').forEach((button) => {
       button.addEventListener('click', () => showScreen(button.dataset.screen));
     });
@@ -310,11 +340,13 @@
       button.addEventListener('click', () => {
         const action = button.dataset.action;
         if (action === 'load-game') {
-          document.querySelector('#single-notice').textContent = 'No save data found. Start a new game to begin.';
+          renderSaves();
           return;
         }
         if (action === 'new-game') {
-          window.location.href = 'game.html';
+          const id = 'run' + Date.now().toString(36);
+          localStorage.setItem('cougarNation.activeRun', id);
+          window.location.href = 'game.html?run=' + id;
           return;
         }
         const messages = {
@@ -334,7 +366,7 @@
     });
     document.querySelectorAll('.setting-list input').forEach((control) => {
       control.addEventListener('change', () => {
-        document.querySelector('#settings-notice').textContent = 'Settings updated for this session.';
+        document.querySelector('#settings-notice').textContent = 'Options updated for this session.';
       });
     });
   </script>
